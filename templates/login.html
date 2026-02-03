@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="card">
+  <h2>CRM MIMOVIL</h2>
+  <p class="muted">Inicia sesión con tu cuenta de Google (Gmail) para acceder.</p>
+
+  <p class="muted"><strong>Opción:</strong> si quieres “mantener sesión iniciada”, usa el botón de abajo.</p>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+    <a class="btn btn-secondary" href="{{ url_for('auth_google') }}">Entrar con Google</a>
+    <a class="btn btn-primary" href="{{ url_for('auth_google') }}?remember=1">Entrar y mantener sesión</a>
+  </div>
+</div>
+{% endblock %}

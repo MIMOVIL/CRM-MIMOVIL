@@ -1,0 +1,325 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="card">
+
+  {% if client %}
+    <h2>Cliente #{{ client.id }}</h2>
+    <form method="post" action="{{ url_for('update_client', client_id=client.id) }}">
+  {% else %}
+    <h2>Nuevo cliente</h2>
+    <form method="post" action="{{ url_for('new_client') }}">
+  {% endif %}
+
+    <div class="row">
+      <div>
+        <label>Nombre completo *</label>
+        <input name="full_name" required value="{{ client.full_name if client else '' }}" />
+      </div>
+      <div>
+        <label>DNI *</label>
+        <input name="dni" required value="{{ client.dni if client else '' }}" />
+      </div>
+      <div>
+        <label>Fecha de nacimiento</label>
+        <input type="date" name="birth_date" value="{{ client.birth_date if client else '' }}" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label>Teléfono de contacto</label>
+        <input name="phone" value="{{ client.phone if client else '' }}" />
+      </div>
+      <div>
+        <label>Email</label>
+        <input type="email" name="email" value="{{ client.email if client else '' }}" />
+      </div>
+      <div>
+        <label>Dirección</label>
+        <input name="address" value="{{ client.address if client else '' }}" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label>Operador actual</label>
+        <input name="current_operator" value="{{ client.current_operator if client else '' }}" />
+      </div>
+      <div>
+        <label>Precio actual tarifas</label>
+        <input name="current_tariff_price" value="{{ client.current_tariff_price if client else '' }}" />
+      </div>
+      <div>
+        <label>Permanencia (texto libre)</label>
+        <input name="permanence" value="{{ client.permanence if client else '' }}" />
+      </div>
+    </div>
+
+    <!-- ✅ NUEVO: Permanencia con fechas -->
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label>Inicio permanencia</label>
+        <input type="date" name="permanence_start_date" value="{{ client.permanence_start_date if client else '' }}" />
+      </div>
+      <div>
+        <label>Meses de permanencia</label>
+        <input type="number" min="0" step="1" name="permanence_months" placeholder="Ej: 12"
+               value="{{ client.permanence_months if client and client.permanence_months is not none else '' }}" />
+      </div>
+      <div>
+        <label>Fin permanencia (automático)</label>
+        <input type="date" disabled value="{{ client.permanence_end_date if client else '' }}" />
+        <div class="muted">Se calcula al Guardar.</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <label>Terminal</label>
+        <input name="terminal" value="{{ client.terminal if client else '' }}" />
+      </div>
+      <div>
+        <label>Gestiones realizadas</label>
+        <textarea name="procedures_done">{{ client.procedures_done if client else '' }}</textarea>
+      </div>
+      <div>
+        <label>Observaciones</label>
+        <textarea name="observations">{{ client.observations if client else '' }}</textarea>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label>Tareas pendientes</label>
+      <textarea name="pending_tasks">{{ client.pending_tasks if client else '' }}</textarea>
+    </div>
+
+    <!-- Campos antiguos ocultos -->
+    <input type="hidden" name="sales_done" value="{{ client.sales_done if client else '' }}">
+    <input type="hidden" name="repairs_done" value="{{ client.repairs_done if client else '' }}">
+
+    {% if client %}
+      <div class="section-title">Líneas móviles</div>
+
+      <input type="hidden" id="line_count" name="line_count" value="{{ lines|length }}">
+
+      <div id="lines_container">
+        {% for l in lines %}
+          <div class="line-box">
+            <div class="row-2">
+              <div>
+                <label>Número</label>
+                <input name="line_number_{{ loop.index0 }}" value="{{ l.line_number or '' }}">
+              </div>
+              <div>
+                <label>Cuenta Google/iPhone</label>
+                <input name="account_{{ loop.index0 }}" value="{{ l.google_or_iphone_account or '' }}">
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+              <div>
+                <label>PIN</label>
+                <input name="pin_{{ loop.index0 }}" value="{{ l.pin or '' }}">
+              </div>
+              <div>
+                <label>PUK</label>
+                <input name="puk_{{ loop.index0 }}" value="{{ l.puk or '' }}">
+              </div>
+              <div>
+                <label>ICC</label>
+                <input name="icc_{{ loop.index0 }}" value="{{ l.icc or '' }}">
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="btn secondary" type="button" onclick="addLine()">+ Añadir línea</button>
+      </div>
+    {% endif %}
+
+    <div style="margin-top:16px; display:flex; gap:10px;">
+      <button class="btn" type="submit">Guardar</button>
+      <a class="btn secondary" href="{{ url_for('clients') }}">Volver</a>
+      {% if client %}
+        <a class="btn secondary" href="{{ url_for('calendar_view') }}">Ver calendario</a>
+      {% endif %}
+    </div>
+
+  </form>
+</div>
+
+{% if client %}
+
+<div class="card" style="margin-top:18px;">
+  <div class="section-title">Reparaciones</div>
+
+  <form method="post" action="{{ url_for('add_repair', client_id=client.id) }}" class="line-box">
+    <div class="row-2">
+      <div>
+        <label>Fecha</label>
+        <input type="date" name="repair_date">
+      </div>
+      <div>
+        <label>Modelo</label>
+        <input name="repair_model" placeholder="Ej: iPhone 12 / Redmi Note 10">
+      </div>
+    </div>
+
+    <div class="row-2" style="margin-top:12px;">
+      <div>
+        <label>Reparación</label>
+        <input name="repair_text" placeholder="Ej: Cambio pantalla">
+      </div>
+      <div>
+        <label>Coste (€)</label>
+        <input type="number" step="0.01" name="repair_cost" placeholder="Ej: 49.99">
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <button class="btn" type="submit">Añadir reparación</button>
+    </div>
+  </form>
+
+  <table style="margin-top:12px;">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Modelo</th>
+        <th>Reparación</th>
+        <th>Coste</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in repairs %}
+      <tr>
+        <td>{{ r.date or '' }}</td>
+        <td>{{ r.model or '' }}</td>
+        <td>{{ r.repair or '' }}</td>
+        <td>{{ r.cost if r.cost is not none else '' }}</td>
+        <td>
+          <form method="post" action="{{ url_for('delete_repair', client_id=client.id, repair_id=r.id) }}">
+            <button class="btn secondary" type="submit">Borrar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
+<div class="card" style="margin-top:18px;">
+  <div class="section-title">Ventas</div>
+
+  <form method="post" action="{{ url_for('add_sale', client_id=client.id) }}" class="line-box">
+    <div class="row-2">
+      <div>
+        <label>Fecha</label>
+        <input type="date" name="sale_date">
+      </div>
+      <div>
+        <label>Producto / Venta</label>
+        <input name="sale_item" placeholder="Ej: Tarifa + terminal / Funda / Cargador">
+      </div>
+    </div>
+
+    <div class="row-2" style="margin-top:12px;">
+      <div>
+        <label>Operador</label>
+        <input name="sale_operator" placeholder="Ej: Vodafone / Orange / Yoigo">
+      </div>
+      <div>
+        <label>Importe (€)</label>
+        <input type="number" step="0.01" name="sale_amount" placeholder="Ej: 29.99">
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label>Notas</label>
+      <textarea name="sale_notes" placeholder="Observaciones de la venta..."></textarea>
+    </div>
+
+    <div style="margin-top:12px;">
+      <button class="btn" type="submit">Añadir venta</button>
+    </div>
+  </form>
+
+  <table style="margin-top:12px;">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Producto</th>
+        <th>Operador</th>
+        <th>Importe</th>
+        <th>Notas</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sales %}
+      <tr>
+        <td>{{ s.date or '' }}</td>
+        <td>{{ s.item or '' }}</td>
+        <td>{{ s.operator or '' }}</td>
+        <td>{{ s.amount if s.amount is not none else '' }}</td>
+        <td>{{ s.notes or '' }}</td>
+        <td>
+          <form method="post" action="{{ url_for('delete_sale', client_id=client.id, sale_id=s.id) }}">
+            <button class="btn secondary" type="submit">Borrar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function addLine() {
+    const container = document.getElementById("lines_container");
+    const countInput = document.getElementById("line_count");
+    let i = parseInt(countInput.value || "0");
+
+    const box = document.createElement("div");
+    box.className = "line-box";
+    box.innerHTML = `
+      <div class="row-2">
+        <div>
+          <label>Número</label>
+          <input name="line_number_${i}" value="">
+        </div>
+        <div>
+          <label>Cuenta Google/iPhone</label>
+          <input name="account_${i}" value="">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <div>
+          <label>PIN</label>
+          <input name="pin_${i}" value="">
+        </div>
+        <div>
+          <label>PUK</label>
+          <input name="puk_${i}" value="">
+        </div>
+        <div>
+          <label>ICC</label>
+          <input name="icc_${i}" value="">
+        </div>
+      </div>
+    `;
+
+    container.appendChild(box);
+    countInput.value = (i + 1).toString();
+  }
+</script>
+
+{% endif %}
+
+{% endblock %}

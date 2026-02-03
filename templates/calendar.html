@@ -1,0 +1,50 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="card">
+  <h2>Calendario — Fin de permanencias</h2>
+  <p class="muted">Haz click en un evento para abrir el cliente.</p>
+
+  <!-- FullCalendar (CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+  <div id="calendar" style="margin-top: 16px;"></div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      height: 'auto',
+      locale: 'es',
+      firstDay: 1,
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,listMonth'
+      },
+      events: async function(fetchInfo, successCallback, failureCallback) {
+        try {
+          const res = await fetch("{{ url_for('api_permanencias') }}");
+          const data = await res.json();
+          successCallback(data);
+        } catch (e) {
+          failureCallback(e);
+        }
+      },
+      eventClick: function(info) {
+        if (info.event.url) {
+          info.jsEvent.preventDefault();
+          window.location.href = info.event.url;
+        }
+      }
+    });
+
+    calendar.render();
+  });
+</script>
+
+{% endblock %}
