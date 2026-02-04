@@ -50,29 +50,34 @@
         <label>Precio actual tarifas</label>
         <input name="current_tariff_price" value="{{ client.current_tariff_price if client else '' }}" />
       </div>
+
+      <!-- ✅ NUEVO: Permanencia simple (se guarda en "permanence") -->
       <div>
-        <label>Permanencia (texto libre)</label>
-        <input name="permanence" value="{{ client.permanence if client else '' }}" />
+        <label>Fin permanencia (se guarda)</label>
+        <input type="date" id="perm_end_display">
+        <div class="muted">Si pones inicio + meses, se calcula solo.</div>
       </div>
     </div>
 
-    <!-- ✅ NUEVO: Permanencia con fechas -->
     <div class="row" style="margin-top:12px;">
       <div>
         <label>Inicio permanencia</label>
-        <input type="date" name="permanence_start_date" value="{{ client.permanence_start_date if client else '' }}" />
+        <input type="date" id="perm_start">
       </div>
       <div>
-        <label>Meses de permanencia</label>
-        <input type="number" min="0" step="1" name="permanence_months" placeholder="Ej: 12"
-               value="{{ client.permanence_months if client and client.permanence_months is not none else '' }}" />
+        <label>Meses permanencia</label>
+        <input type="number" id="perm_months" min="0" step="1" placeholder="Ej: 24">
       </div>
       <div>
-        <label>Fin permanencia (automático)</label>
-        <input type="date" disabled value="{{ client.permanence_end_date if client else '' }}" />
-        <div class="muted">Se calcula al Guardar.</div>
+        <label>Permanencia (texto opcional)</label>
+        <input id="perm_text" placeholder="Ej: 24 meses / condiciones..." />
+        <div class="muted">Opcional. Se guarda junto a la fecha.</div>
       </div>
     </div>
+
+    <!-- IMPORTANTE: este es el campo que tu app.py ya guarda en BD -->
+    <input type="hidden" name="permanence" id="permanence_hidden"
+           value="{{ client.permanence if client else '' }}">
 
     <div class="row" style="margin-top:12px;">
       <div>
@@ -143,9 +148,6 @@
     <div style="margin-top:16px; display:flex; gap:10px;">
       <button class="btn" type="submit">Guardar</button>
       <a class="btn secondary" href="{{ url_for('clients') }}">Volver</a>
-      {% if client %}
-        <a class="btn secondary" href="{{ url_for('calendar_view') }}">Ver calendario</a>
-      {% endif %}
     </div>
 
   </form>
@@ -211,7 +213,6 @@
     </tbody>
   </table>
 </div>
-
 
 <div class="card" style="margin-top:18px;">
   <div class="section-title">Ventas</div>
@@ -280,6 +281,7 @@
 </div>
 
 <script>
+  // ===== Líneas móviles =====
   function addLine() {
     const container = document.getElementById("lines_container");
     const countInput = document.getElementById("line_count");
@@ -318,6 +320,80 @@
     container.appendChild(box);
     countInput.value = (i + 1).toString();
   }
+
+  // ===== Permanencia (se guarda en "permanence") =====
+  function addMonthsToDate(dateObj, months) {
+    const d = new Date(dateObj.getTime());
+    const day = d.getDate();
+    d.setMonth(d.getMonth() + months);
+    if (d.getDate() < day) d.setDate(0);
+    return d;
+  }
+
+  function parseStoredPermanence(raw) {
+    // Esperamos formato: "YYYY-MM-DD" o "YYYY-MM-DD | texto..."
+    const v = (raw || "").trim();
+    if (!v) return { end: "", text: "" };
+
+    const parts = v.split("|").map(x => x.trim());
+    const maybeDate = parts[0] || "";
+    const text = parts.slice(1).join(" | ").trim();
+
+    const end = /^\d{4}-\d{2}-\d{2}$/.test(maybeDate) ? maybeDate : "";
+    return { end, text };
+  }
+
+  function buildStoredPermanence(endDate, text) {
+    const e = (endDate || "").trim();
+    const t = (text || "").trim();
+    if (e && t) return `${e} | ${t}`;
+    if (e) return e;
+    if (t) return t;
+    return "";
+  }
+
+  function syncPermanence() {
+    const startEl = document.getElementById("perm_start");
+    const monthsEl = document.getElementById("perm_months");
+    const endEl = document.getElementById("perm_end_display");
+    const textEl = document.getElementById("perm_text");
+    const hiddenEl = document.getElementById("permanence_hidden");
+
+    const startVal = (startEl?.value || "").trim();
+    const monthsVal = (monthsEl?.value || "").trim();
+    let endVal = (endEl?.value || "").trim();
+    const textVal = (textEl?.value || "").trim();
+
+    if (startVal && monthsVal) {
+      const m = parseInt(monthsVal, 10);
+      if (!isNaN(m)) {
+        const startDate = new Date(startVal + "T00:00:00");
+        const endDate = addMonthsToDate(startDate, m);
+        endVal = endDate.toISOString().slice(0, 10);
+        endEl.value = endVal;
+      }
+    }
+
+    hiddenEl.value = buildStoredPermanence(endVal, textVal);
+  }
+
+  (function initPermanenceUI() {
+    const hiddenEl = document.getElementById("permanence_hidden");
+    const endEl = document.getElementById("perm_end_display");
+    const textEl = document.getElementById("perm_text");
+
+    const parsed = parseStoredPermanence(hiddenEl?.value || "");
+    if (endEl && parsed.end) endEl.value = parsed.end;
+    if (textEl && parsed.text) textEl.value = parsed.text;
+
+    ["perm_start", "perm_months", "perm_end_display", "perm_text"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", syncPermanence);
+      if (el) el.addEventListener("change", syncPermanence);
+    });
+
+    syncPermanence();
+  })();
 </script>
 
 {% endif %}
