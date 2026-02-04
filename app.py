@@ -1,10 +1,9 @@
 import os
 import sqlite3
-import calendar
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import wraps
 
-from flask import Flask, g, redirect, render_template, request, session, url_for, flash, jsonify
+from flask import Flask, g, redirect, render_template, request, session, url_for, flash
 from authlib.integrations.flask_client import OAuth
 
 # =========================
@@ -21,6 +20,9 @@ ALLOWED_EMAILS = set(
     for e in os.environ.get("ALLOWED_EMAILS", "").split(",")
     if e.strip()
 )
+
+# días para alertar (puedes cambiarlo en Render como variable de entorno)
+ALERT_DAYS = int(os.environ.get("ALERT_DAYS", "30"))
 
 app = Flask(__name__)
 app.secret_key = APP_SECRET
@@ -46,7 +48,7 @@ google = oauth.register(
 )
 
 # =========================
-# Base de datos
+# DB helpers
 # =========================
 def get_db():
     if "db" not in g:
@@ -63,49 +65,14 @@ def close_db(exception=None):
         db.close()
 
 
-def ensure_column(table, column, coltype):
-    """
-    Añade columna si no existe (para no romper la BD actual)
-    """
-    db = get_db()
-    cols = [r["name"] for r in db.execute(f"PRAGMA table_info({table})").fetchall()]
-    if column not in cols:
-        db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {coltype};")
-        db.commit()
+def _col_exists(db, table: str, col: str) -> bool:
+    rows = db.execute(f"PRAGMA table_info({table})").fetchall()
+    return any(r["name"] == col for r in rows)
 
 
-def calc_end_date(start_date_str, months):
-    """
-    start_date_str: 'YYYY-MM-DD'
-    months: int o str
-    devuelve 'YYYY-MM-DD' o '' si no se puede calcular
-    """
-    if not start_date_str:
-        return ""
-
-    try:
-        m = int(months or 0)
-    except ValueError:
-        m = 0
-
-    if m <= 0:
-        return ""
-
-    try:
-        d = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-    except ValueError:
-        return ""
-
-    y = d.year + (d.month - 1 + m) // 12
-    mm = (d.month - 1 + m) % 12 + 1
-    day = d.day
-
-    last_day = calendar.monthrange(y, mm)[1]
-    if day > last_day:
-        day = last_day
-
-    end = d.replace(year=y, month=mm, day=day)
-    return end.strftime("%Y-%m-%d")
+def _add_col_if_missing(db, table: str, col: str, coltype: str):
+    if not _col_exists(db, table, col):
+        db.execute(f"ALTER TABLE {table} ADD COLUMN {col} {coltype};")
 
 
 def init_db():
@@ -132,6 +99,11 @@ def init_db():
             created_at TEXT NOT NULL
         );
     """)
+
+    # Nuevos campos (migración “suave”)
+    _add_col_if_missing(db, "clients", "permanence_start", "TEXT")
+    _add_col_if_missing(db, "clients", "permanence_months", "INTEGER")
+    _add_col_if_missing(db, "clients", "permanence_end", "TEXT")
 
     db.execute("""
         CREATE TABLE IF NOT EXISTS mobile_lines (
@@ -176,18 +148,74 @@ def init_db():
 
     db.commit()
 
-    # ✅ NUEVO: columnas para permanencia + calendario (sin romper tu BD)
-    ensure_column("clients", "permanence_start_date", "TEXT")
-    ensure_column("clients", "permanence_months", "INTEGER")
-    ensure_column("clients", "permanence_end_date", "TEXT")
-
 
 @app.before_request
 def ensure_db():
     init_db()
 
 # =========================
-# Autenticación
+# Utilidades fechas
+# =========================
+def parse_yyyy_mm_dd(s: str):
+    s = (s or "").strip()
+    if not s:
+        return None
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def add_months(d: date, months: int) -> date:
+    # suma de meses sin librerías externas
+    y = d.year + (d.month - 1 + months) // 12
+    m = (d.month - 1 + months) % 12 + 1
+    # ajustar día al último del mes si hace falta
+    day = d.day
+    # último día del mes:
+    if m == 12:
+        next_month = date(y + 1, 1, 1)
+    else:
+        next_month = date(y, m + 1, 1)
+    last_day = (next_month - timedelta(days=1)).day
+    if day > last_day:
+        day = last_day
+    return date(y, m, day)
+
+
+def compute_permanence_end(start_str: str, months_str: str, end_str: str):
+    """
+    Devuelve (start_iso, months_int, end_iso)
+    - Si end_str viene informado, se respeta.
+    - Si no, y hay start+months, se calcula.
+    """
+    start = parse_yyyy_mm_dd(start_str)
+    end = parse_yyyy_mm_dd(end_str)
+
+    months_int = None
+    ms = (months_str or "").strip()
+    if ms:
+        try:
+            months_int = int(ms)
+        except ValueError:
+            months_int = None
+
+    if end is None and start is not None and months_int is not None:
+        end = add_months(start, months_int)
+
+    start_iso = start.isoformat() if start else None
+    end_iso = end.isoformat() if end else None
+    return start_iso, months_int, end_iso
+
+
+def days_until(end_iso: str):
+    d = parse_yyyy_mm_dd(end_iso)
+    if not d:
+        return None
+    return (d - date.today()).days
+
+# =========================
+# Auth
 # =========================
 def login_required(view):
     @wraps(view)
@@ -204,7 +232,7 @@ def is_allowed(email):
     return (email or "").lower() in ALLOWED_EMAILS
 
 # =========================
-# Rutas
+# Routes
 # =========================
 @app.route("/")
 def home():
@@ -257,15 +285,62 @@ def logout():
 @login_required
 def clients():
     db = get_db()
-    q = request.args.get("q", "")
+    q = request.args.get("q", "").strip()
+
     if q:
         rows = db.execute(
-            "SELECT * FROM clients WHERE full_name LIKE ? OR dni LIKE ? OR phone LIKE ? ORDER BY id DESC",
+            """
+            SELECT * FROM clients
+            WHERE full_name LIKE ? OR dni LIKE ? OR phone LIKE ?
+            ORDER BY id DESC
+            """,
             (f"%{q}%", f"%{q}%", f"%{q}%")
         ).fetchall()
     else:
         rows = db.execute("SELECT * FROM clients ORDER BY id DESC").fetchall()
-    return render_template("clients_list.html", clients=rows, q=q)
+
+    # añadimos alerta calculada
+    enriched = []
+    for c in rows:
+        du = days_until(c["permanence_end"])
+        enriched.append((c, du))
+    return render_template("clients_list.html", clients=enriched, q=q, alert_days=ALERT_DAYS)
+
+
+@app.route("/calendar")
+@login_required
+def calendar():
+    """
+    Vista sencilla: lista de permanencias que vencen en X días (por defecto 60)
+    """
+    days = request.args.get("days", "60").strip()
+    try:
+        days_int = int(days)
+    except ValueError:
+        days_int = 60
+
+    today = date.today()
+    limit = today + timedelta(days=days_int)
+
+    db = get_db()
+    rows = db.execute(
+        """
+        SELECT id, full_name, phone, dni, permanence_end
+        FROM clients
+        WHERE permanence_end IS NOT NULL AND permanence_end != ''
+        ORDER BY permanence_end ASC
+        """
+    ).fetchall()
+
+    upcoming = []
+    for r in rows:
+        end_d = parse_yyyy_mm_dd(r["permanence_end"])
+        if not end_d:
+            continue
+        if today <= end_d <= limit:
+            upcoming.append((r, (end_d - today).days))
+
+    return render_template("calendar.html", upcoming=upcoming, days=days_int, alert_days=ALERT_DAYS)
 
 
 @app.route("/clients/new", methods=["GET", "POST"])
@@ -274,18 +349,19 @@ def new_client():
     if request.method == "POST":
         db = get_db()
 
-        perm_start = request.form.get("permanence_start_date")
-        perm_months = request.form.get("permanence_months")
-        perm_end = calc_end_date(perm_start, perm_months)
+        p_start, p_months, p_end = compute_permanence_end(
+            request.form.get("permanence_start"),
+            request.form.get("permanence_months"),
+            request.form.get("permanence_end"),
+        )
 
         cur = db.execute("""
             INSERT INTO clients (
                 full_name, dni, birth_date, phone, address, email,
-                current_operator, current_tariff_price, permanence, terminal,
-                sales_done, repairs_done, procedures_done, observations,
-                pending_tasks,
-                permanence_start_date, permanence_months, permanence_end_date,
-                created_at
+                current_operator, current_tariff_price,
+                permanence, permanence_start, permanence_months, permanence_end,
+                terminal, sales_done, repairs_done, procedures_done, observations,
+                pending_tasks, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             request.form["full_name"],
@@ -296,24 +372,23 @@ def new_client():
             request.form.get("email"),
             request.form.get("current_operator"),
             request.form.get("current_tariff_price"),
-            request.form.get("permanence"),
+            request.form.get("permanence"),          # texto libre (si quieres)
+            p_start,
+            p_months,
+            p_end,
             request.form.get("terminal"),
             request.form.get("sales_done"),
             request.form.get("repairs_done"),
             request.form.get("procedures_done"),
             request.form.get("observations"),
             request.form.get("pending_tasks"),
-            perm_start,
-            perm_months if perm_months not in ("", None) else None,
-            perm_end,
             datetime.utcnow().isoformat()
         ))
-
         client_id = cur.lastrowid
         db.commit()
         return redirect(url_for("view_client", client_id=client_id))
 
-    return render_template("client_form.html", client=None, lines=[], repairs=[], sales=[])
+    return render_template("client_form.html", client=None, lines=[], repairs=[], sales=[], alert_days=ALERT_DAYS)
 
 
 @app.route("/clients/<int:client_id>")
@@ -341,7 +416,16 @@ def view_client(client_id):
         (client_id,)
     ).fetchall()
 
-    return render_template("client_form.html", client=client, lines=lines, repairs=repairs, sales=sales)
+    du = days_until(client["permanence_end"])
+    return render_template(
+        "client_form.html",
+        client=client,
+        lines=lines,
+        repairs=repairs,
+        sales=sales,
+        alert_days=ALERT_DAYS,
+        days_left=du
+    )
 
 
 @app.route("/clients/<int:client_id>/update", methods=["POST"])
@@ -349,9 +433,11 @@ def view_client(client_id):
 def update_client(client_id):
     db = get_db()
 
-    perm_start = request.form.get("permanence_start_date")
-    perm_months = request.form.get("permanence_months")
-    perm_end = calc_end_date(perm_start, perm_months)
+    p_start, p_months, p_end = compute_permanence_end(
+        request.form.get("permanence_start"),
+        request.form.get("permanence_months"),
+        request.form.get("permanence_end"),
+    )
 
     db.execute("""
         UPDATE clients SET
@@ -364,15 +450,15 @@ def update_client(client_id):
             current_operator = ?,
             current_tariff_price = ?,
             permanence = ?,
+            permanence_start = ?,
+            permanence_months = ?,
+            permanence_end = ?,
             terminal = ?,
             sales_done = ?,
             repairs_done = ?,
             procedures_done = ?,
             observations = ?,
-            pending_tasks = ?,
-            permanence_start_date = ?,
-            permanence_months = ?,
-            permanence_end_date = ?
+            pending_tasks = ?
         WHERE id = ?
     """, (
         request.form["full_name"],
@@ -384,15 +470,15 @@ def update_client(client_id):
         request.form.get("current_operator"),
         request.form.get("current_tariff_price"),
         request.form.get("permanence"),
+        p_start,
+        p_months,
+        p_end,
         request.form.get("terminal"),
         request.form.get("sales_done"),
         request.form.get("repairs_done"),
         request.form.get("procedures_done"),
         request.form.get("observations"),
         request.form.get("pending_tasks"),
-        perm_start,
-        perm_months if perm_months not in ("", None) else None,
-        perm_end,
         client_id
     ))
 
@@ -429,15 +515,12 @@ def update_client(client_id):
     return redirect(url_for("view_client", client_id=client_id))
 
 
-# =========================
-# Reparaciones
-# =========================
 @app.route("/clients/<int:client_id>/repairs/add", methods=["POST"])
 @login_required
 def add_repair(client_id):
     db = get_db()
 
-    date = request.form.get("repair_date")
+    date_ = request.form.get("repair_date")
     model = request.form.get("repair_model")
     repair = request.form.get("repair_text")
 
@@ -454,7 +537,7 @@ def add_repair(client_id):
         VALUES (?, ?, ?, ?, ?, ?)
     """, (
         client_id,
-        date,
+        date_,
         model,
         repair,
         cost,
@@ -473,15 +556,12 @@ def delete_repair(client_id, repair_id):
     return redirect(url_for("view_client", client_id=client_id))
 
 
-# =========================
-# Ventas
-# =========================
 @app.route("/clients/<int:client_id>/sales/add", methods=["POST"])
 @login_required
 def add_sale(client_id):
     db = get_db()
 
-    date = request.form.get("sale_date")
+    date_ = request.form.get("sale_date")
     item = request.form.get("sale_item")
     operator = request.form.get("sale_operator")
 
@@ -500,7 +580,7 @@ def add_sale(client_id):
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """, (
         client_id,
-        date,
+        date_,
         item,
         operator,
         amount,
@@ -520,39 +600,6 @@ def delete_sale(client_id, sale_id):
     return redirect(url_for("view_client", client_id=client_id))
 
 
-# =========================
-# Calendario permanencias
-# =========================
-@app.route("/calendar")
-@login_required
-def calendar_view():
-    return render_template("calendar.html")
-
-
-@app.route("/api/permanencias")
-@login_required
-def api_permanencias():
-    db = get_db()
-    rows = db.execute("""
-        SELECT id, full_name, phone, permanence_end_date
-        FROM clients
-        WHERE permanence_end_date IS NOT NULL AND permanence_end_date != ''
-        ORDER BY permanence_end_date ASC
-    """).fetchall()
-
-    events = []
-    for r in rows:
-        events.append({
-            "title": f"{r['full_name']} (fin permanencia)",
-            "start": r["permanence_end_date"],
-            "url": url_for("view_client", client_id=r["id"]),
-        })
-    return jsonify(events)
-
-
-# =========================
-# Borrar cliente
-# =========================
 @app.route("/clients/<int:client_id>/delete", methods=["POST"])
 @login_required
 def delete_client(client_id):
