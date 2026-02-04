@@ -3,12 +3,12 @@
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
       <h2 style="margin:0;">Clientes</h2>
-      <a class="btn btn-primary" href="{{ url_for('new_client') }}">+ Nuevo cliente</a>
+      <a class="btn" href="{{ url_for('new_client') }}">+ Nuevo cliente</a>
     </div>
 
     <form method="get" action="{{ url_for('clients') }}" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
       <input name="q" value="{{ q }}" placeholder="Buscar por nombre, DNI o teléfono" />
-      <button class="btn btn-secondary" type="submit">Buscar</button>
+      <button class="btn secondary" type="submit">Buscar</button>
     </form>
 
     <div style="margin-top:14px; overflow:auto;">
@@ -20,24 +20,56 @@
             <th>DNI</th>
             <th>Teléfono</th>
             <th>Operador</th>
+            <th>Fin permanencia</th>
+            <th>Aviso</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          {% for c in clients %}
+
+          {# clients puede venir como lista normal o como (cliente, days_left).
+             Si viene normal, days_left será none y no rompe nada. #}
+
+          {% for item in clients %}
+            {% if item is sequence and item|length == 2 %}
+              {% set c = item[0] %}
+              {% set days_left = item[1] %}
+            {% else %}
+              {% set c = item %}
+              {% set days_left = none %}
+            {% endif %}
+
+            {# Sacar fin permanencia desde "permanence" (puede venir "YYYY-MM-DD | texto...") #}
+            {% set perm_raw = (c.permanence or '') %}
+            {% set perm_end = perm_raw.split('|')[0].strip() %}
+
             <tr>
               <td>{{ c.id }}</td>
               <td>{{ c.full_name }}</td>
               <td>{{ c.dni }}</td>
-              <td>{{ c.phone }}</td>
-              <td>{{ c.current_operator }}</td>
+              <td>{{ c.phone or '' }}</td>
+              <td>{{ c.current_operator or '' }}</td>
+
+              <td>{{ perm_end if perm_end else '' }}</td>
+
               <td>
-                <a class="btn btn-secondary" href="{{ url_for('view_client', client_id=c.id) }}">Abrir</a>
+                {% if days_left is not none %}
+                  {% if days_left <= alert_days %}
+                    <span style="font-weight:800; color:#b00020;">⚠ {{ days_left }} días</span>
+                  {% else %}
+                    {{ days_left }} días
+                  {% endif %}
+                {% endif %}
+              </td>
+
+              <td>
+                <a class="btn secondary" href="{{ url_for('view_client', client_id=c.id) }}">Abrir</a>
               </td>
             </tr>
           {% endfor %}
+
           {% if not clients %}
-            <tr><td colspan="6" style="opacity:.7;">Sin resultados</td></tr>
+            <tr><td colspan="8" style="opacity:.7;">Sin resultados</td></tr>
           {% endif %}
         </tbody>
       </table>
