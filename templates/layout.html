@@ -97,13 +97,21 @@
       background:#fbfcfd;
     }
 
-    table { width:100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { border-bottom:1px solid #e6edf3; padding:10px; text-align:left; vertical-align: top; }
-    th { background:#f6f9fc; font-weight:800; }
+    /* Flash messages */
+    .flash {
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    .flash.success { background:#e7f6ea; border:1px solid #b7e0c2; }
+    .flash.danger  { background:#fff3f4; border:1px solid #ffd0d5; }
+    .flash.warning { background:#fff7e6; border:1px solid #ffe2a8; }
+    .flash.info    { background:#e9f3ff; border:1px solid #bcd8ff; }
 
-    .flash { margin: 0 0 12px 0; padding: 10px 12px; border-radius: 8px; background: #eef6ff; border: 1px solid #d7e9ff; }
-    .flash.danger { background: #ffecec; border-color: #ffd0d0; }
-    .flash.success { background: #ecfff1; border-color: #c9f5d4; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid #e6edf3; padding:10px; text-align:left; }
+    th { background:#f6f9fc; font-weight:800; }
 
     @media (max-width: 900px) {
       .row, .row-2 { grid-template-columns: 1fr; }
@@ -115,6 +123,14 @@
 <header>CRM MIMOVIL</header>
 
 <div class="container">
+
+  <!-- Menú rápido -->
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+    <a class="btn secondary" href="{{ url_for('clients') }}">Clientes</a>
+    <a class="btn secondary" href="{{ url_for('calendar') }}">Calendario permanencias</a>
+    <a class="btn secondary" href="{{ url_for('logout') }}">Salir</a>
+  </div>
+
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, msg in messages %}
