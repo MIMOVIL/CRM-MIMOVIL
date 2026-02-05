@@ -450,11 +450,11 @@ def new_client():
                 full_name, dni, birth_date, phone, address, email,
                 current_operator, current_tariff_price,
                 permanence,
-                permanence_start, permanence_end,            -- compat
-                permanence_start_date, permanence_months, permanence_end_date,  -- nuevo
+                permanence_start, permanence_end,
+                permanence_start_date, permanence_months, permanence_end_date,
                 terminal, sales_done, repairs_done, procedures_done, observations,
                 pending_tasks, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             request.form["full_name"],
             request.form["dni"],
@@ -465,8 +465,8 @@ def new_client():
             request.form.get("current_operator"),
             request.form.get("current_tariff_price"),
             request.form.get("permanence"),
-            p_start, p_end,               # compat
-            p_start, p_months, p_end,     # nuevo
+            p_start, p_end,
+            p_start, p_months, p_end,
             request.form.get("terminal"),
             request.form.get("sales_done"),
             request.form.get("repairs_done"),
@@ -475,6 +475,7 @@ def new_client():
             request.form.get("pending_tasks"),
             datetime.utcnow().isoformat()
         ))
+
         client_id = cur.lastrowid
         db.commit()
         return redirect(url_for("view_client", client_id=client_id))
