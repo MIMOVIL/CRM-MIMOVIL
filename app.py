@@ -54,6 +54,9 @@ google = oauth.register(
 # DB helpers
 # =========================
 def get_db():
+    """
+    Obtiene conexión SQLite por request (guardada en flask.g).
+    """
     if "db" not in g:
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
@@ -79,6 +82,9 @@ def _add_col_if_missing(db, table: str, col: str, coltype: str):
 
 
 def init_db():
+    """
+    Crea tablas/columnas si faltan (idempotente).
+    """
     db = get_db()
 
     db.execute("""
@@ -156,8 +162,9 @@ def init_db():
     db.commit()
 
 
-@app.before_request
-def ensure_db():
+# En vez de ejecutar init_db() en *cada request*, lo hacemos una vez.
+# Si la DB/archivo no existiese aún, SQLite lo crea al conectar.
+with app.app_context():
     init_db()
 
 # =========================
@@ -215,8 +222,25 @@ def compute_permanence_end(start_str: str, months_str: str, end_str: str):
 
 
 def get_end_date_from_client_row(c):
+    """
+    Devuelve la fecha fin de permanencia en ISO (YYYY-MM-DD) o None.
+
+    OJO: sqlite3.Row NO tiene .get()
+    """
+    if not c:
+        return None
+
+    keys = c.keys()
+    end_iso = None
+
     # preferimos la nueva columna
-    end_iso = (c["permanence_end_date"] if "permanence_end_date" in c.keys() else None) or c.get("permanence_end")
+    if "permanence_end_date" in keys:
+        end_iso = c["permanence_end_date"]
+
+    # fallback a la columna vieja
+    if (not end_iso) and ("permanence_end" in keys):
+        end_iso = c["permanence_end"]
+
     return (end_iso or "").strip() or None
 
 
@@ -364,7 +388,6 @@ def calendar_view():
     return render_template("calendar.html", upcoming=upcoming, days=days_int, alert_days=ALERT_DAYS)
 
 
-# ✅ ESTA ERA LA RUTA QUE TE FALTABA (la usa calendar.html con url_for('api_permanencias'))
 @app.route("/api/permanencias", endpoint="api_permanencias")
 @login_required
 def api_permanencias():
