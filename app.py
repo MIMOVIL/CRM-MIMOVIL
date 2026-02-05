@@ -398,6 +398,31 @@ def calendar_view():
         days=days_int,
         alert_days=ALERT_DAYS
     )
+@app.route("/api/debug_db")
+@login_required
+def debug_db():
+    db = get_db()
+
+    count = db.execute("SELECT COUNT(*) AS n FROM clients").fetchone()["n"]
+
+    row = db.execute("""
+        SELECT id,
+               permanence_end_date,
+               permanence_end,
+               permanence_start_date,
+               permanence_months
+        FROM clients
+        ORDER BY id DESC
+        LIMIT 1
+    """).fetchone()
+
+    sample = dict(row) if row else None
+
+    return jsonify({
+        "database_path": DATABASE,
+        "clients_count": count,
+        "sample_last_client": sample,
+    })
 
 
 @app.route("/api/permanencias", endpoint="api_permanencias")
