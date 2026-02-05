@@ -222,7 +222,7 @@
       {% if client %}
         <div class="hr"></div>
 
- <div class="section-title">Líneas móviles</div>
+<div class="section-title">Líneas móviles</div>
 
 <form method="post" action="{{ url_for('update_client', client_id=client.id) }}">
   <!-- Reenviamos también datos principales para no perderlos si el usuario toca líneas -->
@@ -478,97 +478,94 @@
 
   // --- Líneas dinámicas ---
   function renumberLines() {
-    const container = document.getElementById("lines_container");
-    const countInput = document.getElementById("line_count");
-    if (!container || !countInput) return;
+  const container = document.getElementById("lines_container");
+  const countInput = document.getElementById("line_count");
+  if (!container || !countInput) return;
 
-    const cards = Array.from(container.querySelectorAll(".line-card"));
-    countInput.value = cards.length;
+  const cards = Array.from(container.querySelectorAll(".line-card"));
+  countInput.value = cards.length;
 
-    cards.forEach((card, idx) => {
-      // Título
-      const title = card.querySelector(".line-head strong");
-      if (title) title.textContent = `Línea ${idx + 1}`;
+  const prefixes = ["line_number_", "pin_", "puk_", "icc_", "account_", "line_perm_end_"];
 
-      // Cambiar names *_IDX
-      const map = [
-        ["line_number_", "line_number_"],
-        ["pin_", "pin_"],
-        ["puk_", "puk_"],
-        ["icc_", "icc_"],
-        ["account_", "account_"]
-        ["line_perm_end_", "line_perm_end_"],
+  cards.forEach((card, idx) => {
+    const title = card.querySelector(".line-head strong");
+    if (title) title.textContent = `Línea ${idx + 1}`;
 
-      ];
-
-      const inputs = card.querySelectorAll("input");
-      inputs.forEach(input => {
-        map.forEach(([prefix]) => {
-          if (input.name && input.name.startsWith(prefix)) {
-            input.name = prefix + idx;
-          }
-        });
+    const inputs = card.querySelectorAll("input");
+    inputs.forEach(input => {
+      prefixes.forEach(prefix => {
+        if (input.name && input.name.startsWith(prefix)) {
+          input.name = prefix + idx;
+        }
       });
     });
-  }
+  });
+}
 
-  function addLine() {
-    const container = document.getElementById("lines_container");
-    const countInput = document.getElementById("line_count");
-    if (!container || !countInput) return;
+function addLine() {
+  const container = document.getElementById("lines_container");
+  const countInput = document.getElementById("line_count");
+  if (!container || !countInput) return;
 
-    const idx = parseInt(countInput.value || "0", 10);
+  const idx = parseInt(countInput.value || "0", 10);
 
-    const div = document.createElement("div");
-    div.className = "line-card";
-    div.innerHTML = `
-      <div class="line-head">
-        <strong>Línea ${idx + 1}</strong>
-        <button type="button" class="btn light small" onclick="removeLine(this)">Quitar</button>
+  const div = document.createElement("div");
+  div.className = "line-card";
+  div.innerHTML = `
+    <div class="line-head">
+      <strong>Línea ${idx + 1}</strong>
+      <button type="button" class="btn light small" onclick="removeLine(this)">Quitar</button>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Número</label>
+        <input name="line_number_${idx}">
+      </div>
+      <div>
+        <label>PIN</label>
+        <input name="pin_${idx}">
+      </div>
+      <div>
+        <label>PUK</label>
+        <input name="puk_${idx}">
+      </div>
+    </div>
+
+    <div style="height:10px;"></div>
+
+    <div class="row">
+      <div>
+        <label>ICC</label>
+        <input name="icc_${idx}">
       </div>
 
-      <div class="row">
-        <div>
-          <label>Número</label>
-          <input name="line_number_${idx}">
-        </div>
-        <div>
-          <label>PIN</label>
-          <input name="pin_${idx}">
-        </div>
-        <div>
-          <label>PUK</label>
-          <input name="puk_${idx}">
-        </div>
+      <div>
+        <label>Fin permanencia (línea)</label>
+        <input type="date" name="line_perm_end_${idx}">
       </div>
 
-      <div style="height:10px;"></div>
-
-      <div class="row">
-        <div>
-          <label>ICC</label>
-          <input name="icc_${idx}">
-        </div>
-        <div style="grid-column: span 2;">
-          <label>Cuenta Google / iPhone</label>
-          <input name="account_${idx}">
-        </div>
+      <div>
+        <label>Cuenta Google / iPhone</label>
+        <input name="account_${idx}">
       </div>
-    `;
+    </div>
+  `;
 
-    container.appendChild(div);
-    renumberLines();
-  }
+  container.appendChild(div);
+  renumberLines();
+}
 
-  function removeLine(btn) {
-    const card = btn.closest(".line-card");
-    if (card) card.remove();
-    renumberLines();
-  }
+function removeLine(btn) {
+  const card = btn.closest(".line-card");
+  if (card) card.remove();
+  renumberLines();
+}
 
-  // Hacer disponibles las funciones en el scope global para onclick
-  window.addLine = addLine;
-  window.removeLine = removeLine;
+// Para que funcionen los onclick=""
+window.addLine = addLine;
+window.removeLine = removeLine;
+
 </script>
 
 </body>
