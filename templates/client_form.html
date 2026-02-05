@@ -162,6 +162,19 @@
         </div>
 
         <div class="hr"></div>
+<div class="row">
+  <div>
+    <label>Comercial</label>
+    <input
+      name="commercial"
+      placeholder="Nombre del comercial"
+      value="{% if client %}{{ client.commercial or '' }}{% endif %}"
+    >
+  </div>
+</div>
+
+<div style="height:12px;"></div>
+
 
         <div class="row">
           <div>
@@ -231,6 +244,7 @@
           <input type="hidden" name="procedures_done" value="{{ client.procedures_done or '' }}">
           <input type="hidden" name="observations" value="{{ client.observations or '' }}">
           <input type="hidden" name="pending_tasks" value="{{ client.pending_tasks or '' }}">
+          <input type="hidden" name="commercial" value="{{ client.commercial or '' }}">
 
           <input type="hidden" id="line_count" name="line_count" value="{{ lines|length }}">
 
