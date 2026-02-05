@@ -158,6 +158,20 @@ def init_db():
             FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
         );
     """)
+    # --- Backfill: sincronizar columnas de fin de permanencia ---
+    db.execute("""
+        UPDATE clients
+        SET permanence_end_date = permanence_end
+        WHERE (permanence_end_date IS NULL OR permanence_end_date = '')
+          AND permanence_end IS NOT NULL AND permanence_end != '';
+    """)
+
+    db.execute("""
+        UPDATE clients
+        SET permanence_end = permanence_end_date
+        WHERE (permanence_end IS NULL OR permanence_end = '')
+          AND permanence_end_date IS NOT NULL AND permanence_end_date != '';
+    """)
 
     db.commit()
 
@@ -431,11 +445,12 @@ def new_client():
     if request.method == "POST":
         db = get_db()
 
-        p_start, p_months, p_end = compute_permanence_end(
-            request.form.get("permanence_start_date"),
-            request.form.get("permanence_months"),
-            request.form.get("permanence_end_date"),
-        )
+       p_start, p_months, p_end = compute_permanence_end(
+    request.form.get("permanence_start_date") or request.form.get("permanence_start"),
+    request.form.get("permanence_months"),
+    request.form.get("permanence_end_date") or request.form.get("permanence_end"),
+)
+
 
         cur = db.execute("""
             INSERT INTO clients (
@@ -518,11 +533,11 @@ def view_client(client_id):
 def update_client(client_id):
     db = get_db()
 
-    p_start, p_months, p_end = compute_permanence_end(
-        request.form.get("permanence_start_date"),
-        request.form.get("permanence_months"),
-        request.form.get("permanence_end_date"),
-    )
+   p_start, p_months, p_end = compute_permanence_end(
+    request.form.get("permanence_start_date") or request.form.get("permanence_start"),
+    request.form.get("permanence_months"),
+    request.form.get("permanence_end_date") or request.form.get("permanence_end"),
+)
 
     db.execute("""
         UPDATE clients SET
