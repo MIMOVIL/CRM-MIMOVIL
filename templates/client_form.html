@@ -1,400 +1,552 @@
-{% extends 'layout.html' %}
-{% block content %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if client %}Cliente #{{ client.id }}{% else %}Nuevo cliente{% endif %}</title>
 
-<div class="card">
+  <style>
+    :root { --gap: 12px; --b:#e6e6e6; --muted:#666; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background:#f6f7fb; }
+    .topbar { background:#fff; border-bottom:1px solid var(--b); padding:12px 16px; display:flex; gap:12px; align-items:center; }
+    .topbar a { text-decoration:none; background:#eef1f7; padding:10px 14px; border-radius:10px; color:#111; font-weight:600; }
+    .wrap { max-width: 1100px; margin: 16px auto; padding: 0 16px 24px; }
+    .card { background:#fff; border:1px solid var(--b); border-radius:16px; padding:16px; box-shadow: 0 4px 16px rgba(0,0,0,.04); }
+    h1 { margin: 6px 0 14px; font-size: 28px; }
+    .muted { color:var(--muted); font-size: 13px; margin-top:6px; }
+    label { display:block; font-weight:700; margin-bottom:6px; }
+    input, textarea, select {
+      width:100%; box-sizing:border-box;
+      border:1px solid var(--b); border-radius:10px;
+      padding:10px 12px; background:#fff;
+      font-size: 14px;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .row { display:grid; gap: var(--gap); grid-template-columns: repeat(3, 1fr); }
+    .row-2 { display:grid; gap: var(--gap); grid-template-columns: repeat(2, 1fr); }
+    .row-1 { display:grid; gap: var(--gap); grid-template-columns: 1fr; }
+    @media (max-width: 980px) { .row { grid-template-columns: 1fr; } .row-2 { grid-template-columns: 1fr; } }
 
-  {% if client %}
-    <h2>Cliente #{{ client.id }}</h2>
-    <form method="post" action="{{ url_for('update_client', client_id=client.id) }}">
-  {% else %}
-    <h2>Nuevo cliente</h2>
-    <form method="post" action="{{ url_for('new_client') }}">
-  {% endif %}
+    .actions { display:flex; gap:12px; margin-top:14px; }
+    .btn {
+      display:inline-block; border:0; border-radius:12px; padding:10px 14px;
+      background:#2563eb; color:#fff; font-weight:800; cursor:pointer;
+    }
+    .btn.secondary { background:#111827; }
+    .btn.danger { background:#dc2626; }
+    .btn.light { background:#eef1f7; color:#111; font-weight:700; }
+    .btn.small { padding:8px 10px; border-radius:10px; font-size: 13px; }
 
-    <div class="row">
-      <div>
-        <label>Nombre completo *</label>
-        <input name="full_name" required value="{{ client.full_name if client else '' }}" />
-      </div>
-      <div>
-        <label>DNI *</label>
-        <input name="dni" required value="{{ client.dni if client else '' }}" />
-      </div>
-      <div>
-        <label>Fecha de nacimiento</label>
-        <input type="date" name="birth_date" value="{{ client.birth_date if client else '' }}" />
-      </div>
-    </div>
+    .section-title { margin: 18px 0 10px; font-size: 18px; font-weight:900; }
+    .hr { height:1px; background:var(--b); margin: 16px 0; }
 
-    <div class="row" style="margin-top:12px;">
-      <div>
-        <label>Teléfono de contacto</label>
-        <input name="phone" value="{{ client.phone if client else '' }}" />
-      </div>
-      <div>
-        <label>Email</label>
-        <input type="email" name="email" value="{{ client.email if client else '' }}" />
-      </div>
-      <div>
-        <label>Dirección</label>
-        <input name="address" value="{{ client.address if client else '' }}" />
-      </div>
-    </div>
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding:10px; border-bottom:1px solid var(--b); text-align:left; vertical-align: top; font-size: 14px; }
+    th { background:#fafafa; font-weight:900; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#eef1f7; font-size:12px; font-weight:800; }
 
-    <div class="row" style="margin-top:12px;">
-      <div>
-        <label>Operador actual</label>
-        <input name="current_operator" value="{{ client.current_operator if client else '' }}" />
-      </div>
-      <div>
-        <label>Precio actual tarifas</label>
-        <input name="current_tariff_price" value="{{ client.current_tariff_price if client else '' }}" />
-      </div>
+    .grid-lines { display:grid; gap:10px; }
+    .line-card { border:1px solid var(--b); border-radius:14px; padding:12px; background:#fff; }
+    .line-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+    .line-head strong { font-size: 14px; }
+  </style>
+</head>
+<body>
 
-      <!-- ✅ NUEVO: Permanencia simple (se guarda en "permanence") -->
-      <div>
-      <label>Fin permanencia (se guarda)</label>
-<input type="date" id="perm_end_display" name="permanence_end_date">
-<div class="muted">Si pones inicio + meses, se calcula solo.</div>
+  <div class="topbar">
+    <a href="{{ url_for('clients') }}">Clientes</a>
+    <a href="{{ url_for('calendar_view') }}">Calendario permanencias</a>
+    <a href="{{ url_for('logout') }}">Salir</a>
+  </div>
 
+  <div class="wrap">
+    <div class="card">
 
-    <div class="row" style="margin-top:12px;">
-      <div>
-        <label>Inicio permanencia</label>
-        <input type="date" id="perm_start">
-      </div>
-      <div>
-        <label>Meses permanencia</label>
-        <input type="number" id="perm_months" min="0" step="1" placeholder="Ej: 24">
-      </div>
-      <div>
-        <label>Permanencia (texto opcional)</label>
-        <input id="perm_text" placeholder="Ej: 24 meses / condiciones..." />
-        <div class="muted">Opcional. Se guarda junto a la fecha.</div>
-      </div>
-    </div>
+      <h1>
+        {% if client %}Cliente #{{ client.id }}{% else %}Nuevo cliente{% endif %}
+        {% if days_left is not none %}
+          <span class="pill" style="margin-left:10px;">
+            {% if days_left >= 0 %}Quedan {{ days_left }} días{% else %}Vencida hace {{ (days_left * -1) }} días{% endif %}
+          </span>
+        {% endif %}
+      </h1>
 
-    <!-- IMPORTANTE: este es el campo que tu app.py ya guarda en BD -->
-    <input type="hidden" name="permanence" id="permanence_hidden"
-           value="{{ client.permanence if client else '' }}">
+      <form method="post"
+        action="{% if client %}{{ url_for('update_client', client_id=client.id) }}{% else %}{{ url_for('new_client') }}{% endif %}">
 
-    <div class="row" style="margin-top:12px;">
-      <div>
-        <label>Terminal</label>
-        <input name="terminal" value="{{ client.terminal if client else '' }}" />
-      </div>
-      <div>
-        <label>Gestiones realizadas</label>
-        <textarea name="procedures_done">{{ client.procedures_done if client else '' }}</textarea>
-      </div>
-      <div>
-        <label>Observaciones</label>
-        <textarea name="observations">{{ client.observations if client else '' }}</textarea>
-      </div>
-    </div>
+        <div class="row">
+          <div>
+            <label>Nombre completo *</label>
+            <input name="full_name" required value="{{ client.full_name if client else '' }}">
+          </div>
+          <div>
+            <label>DNI *</label>
+            <input name="dni" required value="{{ client.dni if client else '' }}">
+          </div>
+          <div>
+            <label>Fecha de nacimiento</label>
+            <input type="date" name="birth_date" value="{{ client.birth_date if client else '' }}">
+          </div>
+        </div>
 
-    <div style="margin-top:12px;">
-      <label>Tareas pendientes</label>
-      <textarea name="pending_tasks">{{ client.pending_tasks if client else '' }}</textarea>
-    </div>
+        <div style="height:12px;"></div>
 
-    <!-- Campos antiguos ocultos -->
-    <input type="hidden" name="sales_done" value="{{ client.sales_done if client else '' }}">
-    <input type="hidden" name="repairs_done" value="{{ client.repairs_done if client else '' }}">
+        <div class="row">
+          <div>
+            <label>Teléfono de contacto</label>
+            <input name="phone" value="{{ client.phone if client else '' }}">
+          </div>
+          <div>
+            <label>Email</label>
+            <input name="email" value="{{ client.email if client else '' }}">
+          </div>
+          <div>
+            <label>Dirección</label>
+            <input name="address" value="{{ client.address if client else '' }}">
+          </div>
+        </div>
 
-    {% if client %}
-      <div class="section-title">Líneas móviles</div>
+        <div style="height:12px;"></div>
 
-      <input type="hidden" id="line_count" name="line_count" value="{{ lines|length }}">
+        <div class="row">
+          <div>
+            <label>Operador actual</label>
+            <input name="current_operator" value="{{ client.current_operator if client else '' }}">
+          </div>
+          <div>
+            <label>Precio actual tarifas</label>
+            <input name="current_tariff_price" value="{{ client.current_tariff_price if client else '' }}">
+          </div>
+          <div>
+            <label>Fin permanencia (se guarda)</label>
+            <input
+              type="date"
+              id="perm_end_display"
+              name="permanence_end_date"
+              value="{% if client %}{{ (client.permanence_end_date or client.permanence_end or '') }}{% endif %}"
+            >
+            <div class="muted">Si pones inicio + meses, se calcula solo.</div>
+          </div>
+        </div>
 
-      <div id="lines_container">
-        {% for l in lines %}
-          <div class="line-box">
-            <div class="row-2">
-              <div>
-                <label>Número</label>
-                <input name="line_number_{{ loop.index0 }}" value="{{ l.line_number or '' }}">
+        <div style="height:12px;"></div>
+
+        <div class="row">
+          <div>
+            <label>Inicio permanencia</label>
+            <input
+              type="date"
+              id="perm_start"
+              name="permanence_start_date"
+              value="{% if client %}{{ (client.permanence_start_date or client.permanence_start or '') }}{% endif %}"
+            >
+          </div>
+          <div>
+            <label>Meses permanencia</label>
+            <input
+              id="perm_months"
+              name="permanence_months"
+              placeholder="Ej: 24"
+              value="{% if client %}{{ (client.permanence_months or '') }}{% endif %}"
+            >
+          </div>
+          <div>
+            <label>Permanencia (texto opcional)</label>
+            <input
+              name="permanence"
+              placeholder="Ej: 24 meses / condiciones..."
+              value="{{ client.permanence if client else '' }}"
+            >
+            <div class="muted">Opcional. Se guarda junto a la fecha.</div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <div>
+            <label>Terminal</label>
+            <input name="terminal" value="{{ client.terminal if client else '' }}">
+          </div>
+          <div>
+            <label>Gestiones realizadas</label>
+            <textarea name="procedures_done">{{ client.procedures_done if client else '' }}</textarea>
+          </div>
+          <div>
+            <label>Observaciones</label>
+            <textarea name="observations">{{ client.observations if client else '' }}</textarea>
+          </div>
+        </div>
+
+        <div style="height:12px;"></div>
+
+        <div class="row">
+          <div>
+            <label>Ventas realizadas (texto)</label>
+            <textarea name="sales_done">{{ client.sales_done if client else '' }}</textarea>
+          </div>
+          <div>
+            <label>Reparaciones realizadas (texto)</label>
+            <textarea name="repairs_done">{{ client.repairs_done if client else '' }}</textarea>
+          </div>
+          <div>
+            <label>Tareas pendientes</label>
+            <textarea name="pending_tasks">{{ client.pending_tasks if client else '' }}</textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="submit">Guardar</button>
+
+          {% if client %}
+            <form method="post" action="{{ url_for('delete_client', client_id=client.id) }}" onsubmit="return confirm('¿Eliminar cliente?')">
+              <button class="btn danger" type="submit">Eliminar</button>
+            </form>
+          {% endif %}
+        </div>
+      </form>
+
+      {% if client %}
+        <div class="hr"></div>
+
+        <div class="section-title">Líneas móviles</div>
+
+        <form method="post" action="{{ url_for('update_client', client_id=client.id) }}">
+          <!-- Reenviamos también datos principales para no perderlos si el usuario toca líneas -->
+          <input type="hidden" name="full_name" value="{{ client.full_name }}">
+          <input type="hidden" name="dni" value="{{ client.dni }}">
+          <input type="hidden" name="birth_date" value="{{ client.birth_date or '' }}">
+          <input type="hidden" name="phone" value="{{ client.phone or '' }}">
+          <input type="hidden" name="address" value="{{ client.address or '' }}">
+          <input type="hidden" name="email" value="{{ client.email or '' }}">
+          <input type="hidden" name="current_operator" value="{{ client.current_operator or '' }}">
+          <input type="hidden" name="current_tariff_price" value="{{ client.current_tariff_price or '' }}">
+          <input type="hidden" name="permanence" value="{{ client.permanence or '' }}">
+          <input type="hidden" name="permanence_start_date" value="{{ client.permanence_start_date or client.permanence_start or '' }}">
+          <input type="hidden" name="permanence_months" value="{{ client.permanence_months or '' }}">
+          <input type="hidden" name="permanence_end_date" value="{{ client.permanence_end_date or client.permanence_end or '' }}">
+          <input type="hidden" name="terminal" value="{{ client.terminal or '' }}">
+          <input type="hidden" name="sales_done" value="{{ client.sales_done or '' }}">
+          <input type="hidden" name="repairs_done" value="{{ client.repairs_done or '' }}">
+          <input type="hidden" name="procedures_done" value="{{ client.procedures_done or '' }}">
+          <input type="hidden" name="observations" value="{{ client.observations or '' }}">
+          <input type="hidden" name="pending_tasks" value="{{ client.pending_tasks or '' }}">
+
+          <input type="hidden" id="line_count" name="line_count" value="{{ lines|length }}">
+
+          <div id="lines_container" class="grid-lines">
+            {% for line in lines %}
+              <div class="line-card">
+                <div class="line-head">
+                  <strong>Línea {{ loop.index }}</strong>
+                  <button type="button" class="btn light small" onclick="removeLine(this)">Quitar</button>
+                </div>
+
+                <div class="row">
+                  <div>
+                    <label>Número</label>
+                    <input name="line_number_{{ loop.index0 }}" value="{{ line.line_number or '' }}">
+                  </div>
+                  <div>
+                    <label>PIN</label>
+                    <input name="pin_{{ loop.index0 }}" value="{{ line.pin or '' }}">
+                  </div>
+                  <div>
+                    <label>PUK</label>
+                    <input name="puk_{{ loop.index0 }}" value="{{ line.puk or '' }}">
+                  </div>
+                </div>
+
+                <div style="height:10px;"></div>
+
+                <div class="row">
+                  <div>
+                    <label>ICC</label>
+                    <input name="icc_{{ loop.index0 }}" value="{{ line.icc or '' }}">
+                  </div>
+                  <div style="grid-column: span 2;">
+                    <label>Cuenta Google / iPhone</label>
+                    <input name="account_{{ loop.index0 }}" value="{{ line.google_or_iphone_account or '' }}">
+                  </div>
+                </div>
               </div>
-              <div>
-                <label>Cuenta Google/iPhone</label>
-                <input name="account_{{ loop.index0 }}" value="{{ l.google_or_iphone_account or '' }}">
-              </div>
+            {% endfor %}
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn secondary" onclick="addLine()">Añadir línea</button>
+            <button type="submit" class="btn">Guardar líneas</button>
+          </div>
+        </form>
+
+        <div class="hr"></div>
+
+        <div class="section-title">Reparaciones</div>
+        <form method="post" action="{{ url_for('add_repair', client_id=client.id) }}">
+          <div class="row">
+            <div>
+              <label>Fecha</label>
+              <input type="date" name="repair_date">
             </div>
-
-            <div class="row" style="margin-top:12px;">
-              <div>
-                <label>PIN</label>
-                <input name="pin_{{ loop.index0 }}" value="{{ l.pin or '' }}">
-              </div>
-              <div>
-                <label>PUK</label>
-                <input name="puk_{{ loop.index0 }}" value="{{ l.puk or '' }}">
-              </div>
-              <div>
-                <label>ICC</label>
-                <input name="icc_{{ loop.index0 }}" value="{{ l.icc or '' }}">
-              </div>
+            <div>
+              <label>Modelo</label>
+              <input name="repair_model">
+            </div>
+            <div>
+              <label>Coste</label>
+              <input name="repair_cost" placeholder="Ej: 39.90">
             </div>
           </div>
-        {% endfor %}
-      </div>
+          <div style="height:10px;"></div>
+          <div class="row-1">
+            <div>
+              <label>Reparación</label>
+              <input name="repair_text" placeholder="Descripción...">
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn" type="submit">Añadir reparación</button>
+          </div>
+        </form>
 
-      <div style="margin-top:12px;">
-        <button class="btn secondary" type="button" onclick="addLine()">+ Añadir línea</button>
-      </div>
-    {% endif %}
+        {% if repairs and repairs|length > 0 %}
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Modelo</th>
+                <th>Reparación</th>
+                <th>Coste</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in repairs %}
+                <tr>
+                  <td>{{ r.date or '' }}</td>
+                  <td>{{ r.model or '' }}</td>
+                  <td>{{ r.repair or '' }}</td>
+                  <td>{{ r.cost or '' }}</td>
+                  <td>
+                    <form method="post" action="{{ url_for('delete_repair', client_id=client.id, repair_id=r.id) }}" onsubmit="return confirm('¿Eliminar reparación?')">
+                      <button class="btn danger small" type="submit">Borrar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="muted">Sin reparaciones registradas.</div>
+        {% endif %}
 
-    <div style="margin-top:16px; display:flex; gap:10px;">
-      <button class="btn" type="submit">Guardar</button>
-      <a class="btn secondary" href="{{ url_for('clients') }}">Volver</a>
+        <div class="hr"></div>
+
+        <div class="section-title">Ventas</div>
+        <form method="post" action="{{ url_for('add_sale', client_id=client.id) }}">
+          <div class="row">
+            <div>
+              <label>Fecha</label>
+              <input type="date" name="sale_date">
+            </div>
+            <div>
+              <label>Artículo</label>
+              <input name="sale_item">
+            </div>
+            <div>
+              <label>Importe</label>
+              <input name="sale_amount" placeholder="Ej: 99.90">
+            </div>
+          </div>
+          <div style="height:10px;"></div>
+          <div class="row">
+            <div>
+              <label>Operador</label>
+              <input name="sale_operator">
+            </div>
+            <div style="grid-column: span 2;">
+              <label>Notas</label>
+              <input name="sale_notes" placeholder="Notas...">
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn" type="submit">Añadir venta</button>
+          </div>
+        </form>
+
+        {% if sales and sales|length > 0 %}
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Artículo</th>
+                <th>Operador</th>
+                <th>Importe</th>
+                <th>Notas</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in sales %}
+                <tr>
+                  <td>{{ s.date or '' }}</td>
+                  <td>{{ s.item or '' }}</td>
+                  <td>{{ s.operator or '' }}</td>
+                  <td>{{ s.amount or '' }}</td>
+                  <td>{{ s.notes or '' }}</td>
+                  <td>
+                    <form method="post" action="{{ url_for('delete_sale', client_id=client.id, sale_id=s.id) }}" onsubmit="return confirm('¿Eliminar venta?')">
+                      <button class="btn danger small" type="submit">Borrar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="muted">Sin ventas registradas.</div>
+        {% endif %}
+      {% endif %}
+
     </div>
-
-  </form>
-</div>
-
-{% if client %}
-
-<div class="card" style="margin-top:18px;">
-  <div class="section-title">Reparaciones</div>
-
-  <form method="post" action="{{ url_for('add_repair', client_id=client.id) }}" class="line-box">
-    <div class="row-2">
-      <div>
-        <label>Fecha</label>
-        <input type="date" name="repair_date">
-      </div>
-      <div>
-        <label>Modelo</label>
-        <input name="repair_model" placeholder="Ej: iPhone 12 / Redmi Note 10">
-      </div>
-    </div>
-
-    <div class="row-2" style="margin-top:12px;">
-      <div>
-        <label>Reparación</label>
-        <input name="repair_text" placeholder="Ej: Cambio pantalla">
-      </div>
-      <div>
-        <label>Coste (€)</label>
-        <input type="number" step="0.01" name="repair_cost" placeholder="Ej: 49.99">
-      </div>
-    </div>
-
-    <div style="margin-top:12px;">
-      <button class="btn" type="submit">Añadir reparación</button>
-    </div>
-  </form>
-
-  <table style="margin-top:12px;">
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Modelo</th>
-        <th>Reparación</th>
-        <th>Coste</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in repairs %}
-      <tr>
-        <td>{{ r.date or '' }}</td>
-        <td>{{ r.model or '' }}</td>
-        <td>{{ r.repair or '' }}</td>
-        <td>{{ r.cost if r.cost is not none else '' }}</td>
-        <td>
-          <form method="post" action="{{ url_for('delete_repair', client_id=client.id, repair_id=r.id) }}">
-            <button class="btn secondary" type="submit">Borrar</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<div class="card" style="margin-top:18px;">
-  <div class="section-title">Ventas</div>
-
-  <form method="post" action="{{ url_for('add_sale', client_id=client.id) }}" class="line-box">
-    <div class="row-2">
-      <div>
-        <label>Fecha</label>
-        <input type="date" name="sale_date">
-      </div>
-      <div>
-        <label>Producto / Venta</label>
-        <input name="sale_item" placeholder="Ej: Tarifa + terminal / Funda / Cargador">
-      </div>
-    </div>
-
-    <div class="row-2" style="margin-top:12px;">
-      <div>
-        <label>Operador</label>
-        <input name="sale_operator" placeholder="Ej: Vodafone / Orange / Yoigo">
-      </div>
-      <div>
-        <label>Importe (€)</label>
-        <input type="number" step="0.01" name="sale_amount" placeholder="Ej: 29.99">
-      </div>
-    </div>
-
-    <div style="margin-top:12px;">
-      <label>Notas</label>
-      <textarea name="sale_notes" placeholder="Observaciones de la venta..."></textarea>
-    </div>
-
-    <div style="margin-top:12px;">
-      <button class="btn" type="submit">Añadir venta</button>
-    </div>
-  </form>
-
-  <table style="margin-top:12px;">
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Producto</th>
-        <th>Operador</th>
-        <th>Importe</th>
-        <th>Notas</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for s in sales %}
-      <tr>
-        <td>{{ s.date or '' }}</td>
-        <td>{{ s.item or '' }}</td>
-        <td>{{ s.operator or '' }}</td>
-        <td>{{ s.amount if s.amount is not none else '' }}</td>
-        <td>{{ s.notes or '' }}</td>
-        <td>
-          <form method="post" action="{{ url_for('delete_sale', client_id=client.id, sale_id=s.id) }}">
-            <button class="btn secondary" type="submit">Borrar</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  </div>
 
 <script>
-  // ===== Líneas móviles =====
+  // --- Calcula fin de permanencia si hay inicio + meses ---
+  function addMonthsToDate(isoDate, months) {
+    const [y, m, d] = isoDate.split("-").map(Number);
+    if (!y || !m || !d) return null;
+
+    let year = y;
+    let month = m - 1 + months;
+    year += Math.floor(month / 12);
+    month = month % 12;
+    if (month < 0) { month += 12; year -= 1; }
+
+    // último día del mes destino
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const day = Math.min(d, lastDay);
+
+    const dt = new Date(year, month, day);
+    const mm = String(dt.getMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getDate()).padStart(2, "0");
+    return `${dt.getFullYear()}-${mm}-${dd}`;
+  }
+
+  function recalcEnd() {
+    const startEl = document.getElementById("perm_start");
+    const monthsEl = document.getElementById("perm_months");
+    const endEl = document.getElementById("perm_end_display");
+    if (!startEl || !monthsEl || !endEl) return;
+
+    const start = (startEl.value || "").trim();
+    const monthsRaw = (monthsEl.value || "").trim();
+    const months = monthsRaw ? parseInt(monthsRaw, 10) : NaN;
+
+    if (start && Number.isFinite(months)) {
+      const end = addMonthsToDate(start, months);
+      if (end) endEl.value = end;
+    }
+  }
+
+  document.addEventListener("input", function (e) {
+    if (e.target && (e.target.id === "perm_start" || e.target.id === "perm_months")) {
+      recalcEnd();
+    }
+  });
+
+  // --- Líneas dinámicas ---
+  function renumberLines() {
+    const container = document.getElementById("lines_container");
+    const countInput = document.getElementById("line_count");
+    if (!container || !countInput) return;
+
+    const cards = Array.from(container.querySelectorAll(".line-card"));
+    countInput.value = cards.length;
+
+    cards.forEach((card, idx) => {
+      // Título
+      const title = card.querySelector(".line-head strong");
+      if (title) title.textContent = `Línea ${idx + 1}`;
+
+      // Cambiar names *_IDX
+      const map = [
+        ["line_number_", "line_number_"],
+        ["pin_", "pin_"],
+        ["puk_", "puk_"],
+        ["icc_", "icc_"],
+        ["account_", "account_"]
+      ];
+
+      const inputs = card.querySelectorAll("input");
+      inputs.forEach(input => {
+        map.forEach(([prefix]) => {
+          if (input.name && input.name.startsWith(prefix)) {
+            input.name = prefix + idx;
+          }
+        });
+      });
+    });
+  }
+
   function addLine() {
     const container = document.getElementById("lines_container");
     const countInput = document.getElementById("line_count");
-    let i = parseInt(countInput.value || "0");
+    if (!container || !countInput) return;
 
-    const box = document.createElement("div");
-    box.className = "line-box";
-    box.innerHTML = `
-      <div class="row-2">
-        <div>
-          <label>Número</label>
-          <input name="line_number_${i}" value="">
-        </div>
-        <div>
-          <label>Cuenta Google/iPhone</label>
-          <input name="account_${i}" value="">
-        </div>
+    const idx = parseInt(countInput.value || "0", 10);
+
+    const div = document.createElement("div");
+    div.className = "line-card";
+    div.innerHTML = `
+      <div class="line-head">
+        <strong>Línea ${idx + 1}</strong>
+        <button type="button" class="btn light small" onclick="removeLine(this)">Quitar</button>
       </div>
 
-      <div class="row" style="margin-top:12px;">
+      <div class="row">
+        <div>
+          <label>Número</label>
+          <input name="line_number_${idx}">
+        </div>
         <div>
           <label>PIN</label>
-          <input name="pin_${i}" value="">
+          <input name="pin_${idx}">
         </div>
         <div>
           <label>PUK</label>
-          <input name="puk_${i}" value="">
+          <input name="puk_${idx}">
         </div>
+      </div>
+
+      <div style="height:10px;"></div>
+
+      <div class="row">
         <div>
           <label>ICC</label>
-          <input name="icc_${i}" value="">
+          <input name="icc_${idx}">
+        </div>
+        <div style="grid-column: span 2;">
+          <label>Cuenta Google / iPhone</label>
+          <input name="account_${idx}">
         </div>
       </div>
     `;
 
-    container.appendChild(box);
-    countInput.value = (i + 1).toString();
+    container.appendChild(div);
+    renumberLines();
   }
 
-  // ===== Permanencia (se guarda en "permanence") =====
-  function addMonthsToDate(dateObj, months) {
-    const d = new Date(dateObj.getTime());
-    const day = d.getDate();
-    d.setMonth(d.getMonth() + months);
-    if (d.getDate() < day) d.setDate(0);
-    return d;
+  function removeLine(btn) {
+    const card = btn.closest(".line-card");
+    if (card) card.remove();
+    renumberLines();
   }
 
-  function parseStoredPermanence(raw) {
-    // Esperamos formato: "YYYY-MM-DD" o "YYYY-MM-DD | texto..."
-    const v = (raw || "").trim();
-    if (!v) return { end: "", text: "" };
-
-    const parts = v.split("|").map(x => x.trim());
-    const maybeDate = parts[0] || "";
-    const text = parts.slice(1).join(" | ").trim();
-
-    const end = /^\d{4}-\d{2}-\d{2}$/.test(maybeDate) ? maybeDate : "";
-    return { end, text };
-  }
-
-  function buildStoredPermanence(endDate, text) {
-    const e = (endDate || "").trim();
-    const t = (text || "").trim();
-    if (e && t) return `${e} | ${t}`;
-    if (e) return e;
-    if (t) return t;
-    return "";
-  }
-
-  function syncPermanence() {
-    const startEl = document.getElementById("perm_start");
-    const monthsEl = document.getElementById("perm_months");
-    const endEl = document.getElementById("perm_end_display");
-    const textEl = document.getElementById("perm_text");
-    const hiddenEl = document.getElementById("permanence_hidden");
-
-    const startVal = (startEl?.value || "").trim();
-    const monthsVal = (monthsEl?.value || "").trim();
-    let endVal = (endEl?.value || "").trim();
-    const textVal = (textEl?.value || "").trim();
-
-    if (startVal && monthsVal) {
-      const m = parseInt(monthsVal, 10);
-      if (!isNaN(m)) {
-        const startDate = new Date(startVal + "T00:00:00");
-        const endDate = addMonthsToDate(startDate, m);
-        endVal = endDate.toISOString().slice(0, 10);
-        endEl.value = endVal;
-      }
-    }
-
-    hiddenEl.value = buildStoredPermanence(endVal, textVal);
-  }
-
-  (function initPermanenceUI() {
-    const hiddenEl = document.getElementById("permanence_hidden");
-    const endEl = document.getElementById("perm_end_display");
-    const textEl = document.getElementById("perm_text");
-
-    const parsed = parseStoredPermanence(hiddenEl?.value || "");
-    if (endEl && parsed.end) endEl.value = parsed.end;
-    if (textEl && parsed.text) textEl.value = parsed.text;
-
-    ["perm_start", "perm_months", "perm_end_display", "perm_text"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener("input", syncPermanence);
-      if (el) el.addEventListener("change", syncPermanence);
-    });
-
-    syncPermanence();
-  })();
+  // Hacer disponibles las funciones en el scope global para onclick
+  window.addLine = addLine;
+  window.removeLine = removeLine;
 </script>
 
-{% endif %}
-
-{% endblock %}
+</body>
+</html>
