@@ -359,14 +359,11 @@ def clients():
 @app.route("/calendar", endpoint="calendar_view")
 @login_required
 def calendar_view():
-    """
-    Vista: lista de permanencias que vencen en X días (por defecto 60)
-    """
-    days = request.args.get("days", "60").strip()
+    days = request.args.get("days", "365").strip()
     try:
         days_int = int(days)
     except ValueError:
-        days_int = 60
+        days_int = 365
 
     today = date.today()
     limit = today + timedelta(days=days_int)
@@ -388,11 +385,15 @@ def calendar_view():
         end_d = parse_yyyy_mm_dd(r["end_date"])
         if not end_d:
             continue
-        if today <= end_d <= limit:
-            upcoming.append((r, (end_d - today).days))
 
-    return render_template("calendar.html", upcoming=upcoming, days=days_int, alert_days=ALERT_DAYS)
+        upcoming.append((r, (end_d - today).days))
 
+    return render_template(
+        "calendar.html",
+        upcoming=upcoming,
+        days=days_int,
+        alert_days=ALERT_DAYS
+    )
 
 @app.route("/api/permanencias", endpoint="api_permanencias")
 @login_required
