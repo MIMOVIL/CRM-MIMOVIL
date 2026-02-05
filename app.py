@@ -174,10 +174,16 @@ def parse_yyyy_mm_dd(s: str):
     s = (s or "").strip()
     if not s:
         return None
-    try:
-        return datetime.strptime(s, "%Y-%m-%d").date()
-    except ValueError:
-        return None
+
+    # Acepta varios formatos de fecha
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            pass
+
+    return None
+
 
 
 def add_months(d: date, months: int) -> date:
