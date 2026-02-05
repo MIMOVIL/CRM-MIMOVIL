@@ -54,9 +54,7 @@ google = oauth.register(
 # DB helpers
 # =========================
 def get_db():
-    """
-    Obtiene conexión SQLite por request (guardada en flask.g).
-    """
+    """Obtiene conexión SQLite por request (guardada en flask.g)."""
     if "db" not in g:
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
@@ -82,9 +80,7 @@ def _add_col_if_missing(db, table: str, col: str, coltype: str):
 
 
 def init_db():
-    """
-    Crea tablas/columnas si faltan (idempotente).
-    """
+    """Crea tablas/columnas si faltan (idempotente)."""
     db = get_db()
 
     db.execute("""
@@ -132,6 +128,7 @@ def init_db():
         );
     """)
 
+    # ✅ ESTA TABLA FALTABA EN TU CÓDIGO PEGADO
     db.execute("""
         CREATE TABLE IF NOT EXISTS repairs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,6 +155,7 @@ def init_db():
             FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
         );
     """)
+
     # --- Backfill: sincronizar columnas de fin de permanencia ---
     db.execute("""
         UPDATE clients
@@ -176,8 +174,7 @@ def init_db():
     db.commit()
 
 
-# En vez de ejecutar init_db() en *cada request*, lo hacemos una vez.
-# Si la DB/archivo no existiese aún, SQLite lo crea al conectar.
+# Inicializamos DB una vez al arrancar
 with app.app_context():
     init_db()
 
@@ -197,7 +194,6 @@ def parse_yyyy_mm_dd(s: str):
             pass
 
     return None
-
 
 
 def add_months(d: date, months: int) -> date:
@@ -242,11 +238,7 @@ def compute_permanence_end(start_str: str, months_str: str, end_str: str):
 
 
 def get_end_date_from_client_row(c):
-    """
-    Devuelve la fecha fin de permanencia en ISO (YYYY-MM-DD) o None.
-
-    OJO: sqlite3.Row NO tiene .get()
-    """
+    """Devuelve la fecha fin de permanencia en ISO o None. sqlite3.Row NO tiene .get()."""
     if not c:
         return None
 
@@ -355,7 +347,6 @@ def clients():
     else:
         rows = db.execute("SELECT * FROM clients ORDER BY id DESC").fetchall()
 
-    # Mapa id -> días restantes (por si lo quieres mostrar en clients_list)
     days_left_map = {}
     for c in rows:
         end_iso = get_end_date_from_client_row(c)
@@ -400,7 +391,9 @@ def calendar_view():
         if not end_d:
             continue
 
-        upcoming.append((r, (end_d - today).days))
+        # mostramos solo dentro del rango (hoy -> hoy + days)
+        if today <= end_d <= limit:
+            upcoming.append((r, (end_d - today).days))
 
     return render_template(
         "calendar.html",
@@ -408,6 +401,7 @@ def calendar_view():
         days=days_int,
         alert_days=ALERT_DAYS
     )
+
 
 @app.route("/api/permanencias", endpoint="api_permanencias")
 @login_required
@@ -445,12 +439,11 @@ def new_client():
     if request.method == "POST":
         db = get_db()
 
-       p_start, p_months, p_end = compute_permanence_end(
-    request.form.get("permanence_start_date") or request.form.get("permanence_start"),
-    request.form.get("permanence_months"),
-    request.form.get("permanence_end_date") or request.form.get("permanence_end"),
-)
-
+        p_start, p_months, p_end = compute_permanence_end(
+            request.form.get("permanence_start_date") or request.form.get("permanence_start"),
+            request.form.get("permanence_months"),
+            request.form.get("permanence_end_date") or request.form.get("permanence_end"),
+        )
 
         cur = db.execute("""
             INSERT INTO clients (
@@ -533,11 +526,11 @@ def view_client(client_id):
 def update_client(client_id):
     db = get_db()
 
-   p_start, p_months, p_end = compute_permanence_end(
-    request.form.get("permanence_start_date") or request.form.get("permanence_start"),
-    request.form.get("permanence_months"),
-    request.form.get("permanence_end_date") or request.form.get("permanence_end"),
-)
+    p_start, p_months, p_end = compute_permanence_end(
+        request.form.get("permanence_start_date") or request.form.get("permanence_start"),
+        request.form.get("permanence_months"),
+        request.form.get("permanence_end_date") or request.form.get("permanence_end"),
+    )
 
     db.execute("""
         UPDATE clients SET
