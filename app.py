@@ -374,26 +374,23 @@ def calendar_view():
     limit = today + timedelta(days=days_int)
 
     db = get_db()
-    rows = db.execute(
-        """
-        SELECT id, full_name, phone, dni,
-               COALESCE(NULLIF(permanence_end_date,''), permanence_end) AS end_date
-        FROM clients
-        WHERE (permanence_end_date IS NOT NULL AND permanence_end_date != '')
-           OR (permanence_end IS NOT NULL AND permanence_end != '')
-        ORDER BY end_date ASC
-        """
-    ).fetchall()
+    rows = db.execute("SELECT * FROM clients ORDER BY id DESC").fetchall()
 
     upcoming = []
     for r in rows:
-        end_d = parse_yyyy_mm_dd(r["end_date"])
+        end_iso = get_end_date_from_client_row(r)
+        if not end_iso:
+            continue
+
+        end_d = parse_yyyy_mm_dd(end_iso)
         if not end_d:
             continue
 
-        # mostramos solo dentro del rango (hoy -> hoy + days)
         if today <= end_d <= limit:
             upcoming.append((r, (end_d - today).days))
+
+    # Ordenar por los que vencen antes
+    upcoming.sort(key=lambda t: parse_yyyy_mm_dd(get_end_date_from_client_row(t[0])) or date.max)
 
     return render_template(
         "calendar.html",
@@ -406,6 +403,32 @@ def calendar_view():
 @app.route("/api/permanencias", endpoint="api_permanencias")
 @login_required
 def api_permanencias():
+    db = get_db()
+
+    # Cogemos TODOS los clientes y calculamos el fin igual que en /clients
+    rows = db.execute("SELECT * FROM clients ORDER BY id DESC").fetchall()
+
+    out = []
+    for r in rows:
+        end_iso = get_end_date_from_client_row(r)
+        if not end_iso:
+            continue
+
+        out.append({
+            "id": r["id"],
+            "full_name": r["full_name"],
+            "phone": r["phone"],
+            "email": r["email"] if "email" in r.keys() else None,
+            "current_operator": r["current_operator"] if "current_operator" in r.keys() else None,
+            "permanence_end_date": end_iso,
+            "days_left": days_until(end_iso),
+            "url": url_for("view_client", client_id=r["id"])
+        })
+
+    # Ordenamos por fecha fin (de más próxima a más lejana)
+    out.sort(key=lambda x: x["permanence_end_date"] or "9999-12-31")
+    return jsonify(out)
+
     db = get_db()
     rows = db.execute(
         """
