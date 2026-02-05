@@ -1,50 +1,54 @@
-{% extends 'layout.html' %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Calendario permanencias</title>
 
-<div class="card">
-  <h2>Calendario — Fin de permanencias</h2>
-  <p class="muted">Haz click en un evento para abrir el cliente.</p>
-
-  <!-- FullCalendar (CDN) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
-  <div id="calendar" style="margin-top: 16px;"></div>
-</div>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    #calendar {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Calendario permanencias</h2>
+
+<div id="calendar"></div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', async function() {
-    const calendarEl = document.getElementById('calendar');
+document.addEventListener("DOMContentLoaded", function () {
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      height: 'auto',
-      locale: 'es',
-      firstDay: 1,
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,listMonth'
-      },
-      events: async function(fetchInfo, successCallback, failureCallback) {
-        try {
-          const res = await fetch("{{ url_for('api_permanencias') }}");
-          const data = await res.json();
-          successCallback(data);
-        } catch (e) {
-          failureCallback(e);
-        }
-      },
-      eventClick: function(info) {
-        if (info.event.url) {
-          info.jsEvent.preventDefault();
-          window.location.href = info.event.url;
-        }
-      }
+  fetch("/api/permanencias")
+    .then(r => r.json())
+    .then(data => {
+
+      const events = data.map(c => ({
+        title: c.full_name + " (" + c.days_left + " días)",
+        start: c.permanence_end_date,
+        url: c.url
+      }));
+
+      const calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+        initialView: "dayGridMonth",
+        locale: "es",
+        events: events
+      });
+
+      calendar.render();
     });
 
-    calendar.render();
-  });
+});
 </script>
 
-{% endblock %}
+</body>
+</html>
