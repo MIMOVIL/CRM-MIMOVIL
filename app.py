@@ -113,6 +113,8 @@ def init_db():
     _add_col_if_missing(db, "clients", "permanence_start_date", "TEXT")
     _add_col_if_missing(db, "clients", "permanence_months", "INTEGER")
     _add_col_if_missing(db, "clients", "permanence_end_date", "TEXT")
+    _add_col_if_missing(db, "clients", "commercial", "TEXT")
+
 
     db.execute("""
         CREATE TABLE IF NOT EXISTS mobile_lines (
@@ -501,8 +503,8 @@ def new_client():
                 permanence_start, permanence_end,
                 permanence_start_date, permanence_months, permanence_end_date,
                 terminal, sales_done, repairs_done, procedures_done, observations,
-                pending_tasks, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                pending_tasks, commercial, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             request.form["full_name"],
             request.form["dni"],
@@ -521,6 +523,7 @@ def new_client():
             request.form.get("procedures_done"),
             request.form.get("observations"),
             request.form.get("pending_tasks"),
+            request.form.get("commercial"),
             datetime.utcnow().isoformat()
         ))
 
@@ -607,6 +610,8 @@ def update_client(client_id):
             procedures_done = ?,
             observations = ?,
             pending_tasks = ?
+            commercial = ?
+
         WHERE id = ?
     """, (
         request.form["full_name"],
@@ -632,6 +637,8 @@ def update_client(client_id):
         request.form.get("procedures_done"),
         request.form.get("observations"),
         request.form.get("pending_tasks"),
+        request.form.get("commercial"),
+
         client_id
     ))
 
