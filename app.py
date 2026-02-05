@@ -1,3 +1,5 @@
+
+
 import os
 import sqlite3
 from datetime import datetime, timedelta, date
@@ -609,7 +611,7 @@ def update_client(client_id):
             repairs_done = ?,
             procedures_done = ?,
             observations = ?,
-            pending_tasks = ?
+            pending_tasks = ?,
             commercial = ?
 
         WHERE id = ?
