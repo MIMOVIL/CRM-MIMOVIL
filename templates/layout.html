@@ -97,7 +97,6 @@
       background:#fbfcfd;
     }
 
-    /* Flash messages */
     .flash {
       padding: 10px 12px;
       border-radius: 10px;
@@ -120,11 +119,12 @@
 </head>
 
 <body>
+
 <header>CRM MIMOVIL</header>
 
 <div class="container">
 
-  <!-- Menú rápido -->
+  <!-- Menú -->
   <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
     <a class="btn secondary" href="{{ url_for('clients') }}">Clientes</a>
     <a class="btn secondary" href="{{ url_for('calendar') }}">Calendario permanencias</a>
@@ -140,6 +140,7 @@
   {% endwith %}
 
   {% block content %}{% endblock %}
+
 </div>
 
 </body>
