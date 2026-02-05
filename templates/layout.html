@@ -6,103 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background:#f4f6f8;
-      margin:0;
-    }
+    body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
+    header { background:#1e88ff; color:#fff; padding:18px 20px; text-align:center; font-weight:700; font-size:20px; }
+    .container { max-width: 1100px; margin: 30px auto; padding: 0 16px; }
+    .card { background:#fff; border-radius:12px; padding:22px; box-shadow:0 6px 18px rgba(0,0,0,.08); }
+    .row { display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
+    .row-2 { display:grid; grid-template-columns: repeat(2, 1fr); gap:14px; }
+    label { display:block; font-weight:600; margin: 6px 0; }
+    input, textarea, select { width: 100%; padding: 10px 12px; font-size: 16px; border: 1px solid #cfd8dc; border-radius: 8px; box-sizing: border-box; }
+    textarea { min-height: 90px; resize: vertical; }
 
-    header {
-      background:#1e88ff;
-      color:#fff;
-      padding:18px 20px;
-      text-align:center;
-      font-weight:700;
-      font-size:20px;
-    }
+    .btn { padding: 10px 14px; border-radius: 8px; border: none; cursor:pointer; background:#1e88ff; color:white; font-weight:700; text-decoration:none; display:inline-block; }
+    .btn.secondary { background:#e9eef3; color:#111; }
 
-    .container {
-      max-width: 1100px;
-      margin: 30px auto;
-      padding: 0 16px;
-    }
+    .section-title { margin-top: 22px; font-size:18px; font-weight:800; }
+    .line-box { border:1px solid #e3e8ee; padding:14px; border-radius:10px; margin-top:12px; background:#fbfcfd; }
 
-    .card {
-      background:#fff;
-      border-radius:12px;
-      padding:22px;
-      box-shadow:0 6px 18px rgba(0,0,0,.08);
-    }
-
-    .row {
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap:14px;
-    }
-
-    .row-2 {
-      display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap:14px;
-    }
-
-    label {
-      display:block;
-      font-weight:600;
-      margin: 6px 0;
-    }
-
-    input, textarea, select {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 16px;
-      border: 1px solid #cfd8dc;
-      border-radius: 8px;
-      box-sizing: border-box;
-    }
-
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
-
-    .btn {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: none;
-      cursor:pointer;
-      background:#1e88ff;
-      color:white;
-      font-weight:700;
-      text-decoration:none;
-      display:inline-block;
-    }
-
-    .btn.secondary {
-      background:#e9eef3;
-      color:#111;
-    }
-
-    .section-title {
-      margin-top: 22px;
-      font-size:18px;
-      font-weight:800;
-    }
-
-    .line-box {
-      border:1px solid #e3e8ee;
-      padding:14px;
-      border-radius:10px;
-      margin-top:12px;
-      background:#fbfcfd;
-    }
-
-    .flash {
-      padding: 10px 12px;
-      border-radius: 10px;
-      margin-bottom: 12px;
-      font-weight: 700;
-    }
+    .flash { padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-weight: 700; }
     .flash.success { background:#e7f6ea; border:1px solid #b7e0c2; }
     .flash.danger  { background:#fff3f4; border:1px solid #ffd0d5; }
     .flash.warning { background:#fff7e6; border:1px solid #ffe2a8; }
@@ -112,24 +32,22 @@
     th, td { border-bottom:1px solid #e6edf3; padding:10px; text-align:left; }
     th { background:#f6f9fc; font-weight:800; }
 
-    @media (max-width: 900px) {
-      .row, .row-2 { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px) { .row, .row-2 { grid-template-columns: 1fr; } }
   </style>
 </head>
 
 <body>
-
 <header>CRM MIMOVIL</header>
 
 <div class="container">
 
-  <!-- Menú -->
-  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-    <a class="btn secondary" href="{{ url_for('clients') }}">Clientes</a>
-    <a class="btn secondary" href="{{ url_for('calendar') }}">Calendario permanencias</a>
-    <a class="btn secondary" href="{{ url_for('logout') }}">Salir</a>
-  </div>
+  {% if session.get("user") %}
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+      <a class="btn secondary" href="{{ url_for('clients') }}">Clientes</a>
+      <a class="btn secondary" href="{{ url_for('calendar_view') }}">Calendario permanencias</a>
+      <a class="btn secondary" href="{{ url_for('logout') }}">Salir</a>
+    </div>
+  {% endif %}
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -140,7 +58,6 @@
   {% endwith %}
 
   {% block content %}{% endblock %}
-
 </div>
 
 </body>
