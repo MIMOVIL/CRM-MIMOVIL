@@ -222,76 +222,83 @@
       {% if client %}
         <div class="hr"></div>
 
-        <div class="section-title">Líneas móviles</div>
+ <div class="section-title">Líneas móviles</div>
 
-        <form method="post" action="{{ url_for('update_client', client_id=client.id) }}">
-          <!-- Reenviamos también datos principales para no perderlos si el usuario toca líneas -->
-          <input type="hidden" name="full_name" value="{{ client.full_name }}">
-          <input type="hidden" name="dni" value="{{ client.dni }}">
-          <input type="hidden" name="birth_date" value="{{ client.birth_date or '' }}">
-          <input type="hidden" name="phone" value="{{ client.phone or '' }}">
-          <input type="hidden" name="address" value="{{ client.address or '' }}">
-          <input type="hidden" name="email" value="{{ client.email or '' }}">
-          <input type="hidden" name="current_operator" value="{{ client.current_operator or '' }}">
-          <input type="hidden" name="current_tariff_price" value="{{ client.current_tariff_price or '' }}">
-          <input type="hidden" name="permanence" value="{{ client.permanence or '' }}">
-          <input type="hidden" name="permanence_start_date" value="{{ client.permanence_start_date or client.permanence_start or '' }}">
-          <input type="hidden" name="permanence_months" value="{{ client.permanence_months or '' }}">
-          <input type="hidden" name="permanence_end_date" value="{{ client.permanence_end_date or client.permanence_end or '' }}">
-          <input type="hidden" name="terminal" value="{{ client.terminal or '' }}">
-          <input type="hidden" name="sales_done" value="{{ client.sales_done or '' }}">
-          <input type="hidden" name="repairs_done" value="{{ client.repairs_done or '' }}">
-          <input type="hidden" name="procedures_done" value="{{ client.procedures_done or '' }}">
-          <input type="hidden" name="observations" value="{{ client.observations or '' }}">
-          <input type="hidden" name="pending_tasks" value="{{ client.pending_tasks or '' }}">
-          <input type="hidden" name="commercial" value="{{ client.commercial or '' }}">
+<form method="post" action="{{ url_for('update_client', client_id=client.id) }}">
+  <!-- Reenviamos también datos principales para no perderlos si el usuario toca líneas -->
+  <input type="hidden" name="full_name" value="{{ client.full_name }}">
+  <input type="hidden" name="dni" value="{{ client.dni }}">
+  <input type="hidden" name="birth_date" value="{{ client.birth_date or '' }}">
+  <input type="hidden" name="phone" value="{{ client.phone or '' }}">
+  <input type="hidden" name="address" value="{{ client.address or '' }}">
+  <input type="hidden" name="email" value="{{ client.email or '' }}">
+  <input type="hidden" name="current_operator" value="{{ client.current_operator or '' }}">
+  <input type="hidden" name="current_tariff_price" value="{{ client.current_tariff_price or '' }}">
+  <input type="hidden" name="permanence" value="{{ client.permanence or '' }}">
+  <input type="hidden" name="permanence_start_date" value="{{ client.permanence_start_date or client.permanence_start or '' }}">
+  <input type="hidden" name="permanence_months" value="{{ client.permanence_months or '' }}">
+  <input type="hidden" name="permanence_end_date" value="{{ client.permanence_end_date or client.permanence_end or '' }}">
+  <input type="hidden" name="terminal" value="{{ client.terminal or '' }}">
+  <input type="hidden" name="sales_done" value="{{ client.sales_done or '' }}">
+  <input type="hidden" name="repairs_done" value="{{ client.repairs_done or '' }}">
+  <input type="hidden" name="procedures_done" value="{{ client.procedures_done or '' }}">
+  <input type="hidden" name="observations" value="{{ client.observations or '' }}">
+  <input type="hidden" name="pending_tasks" value="{{ client.pending_tasks or '' }}">
+  <input type="hidden" name="commercial" value="{{ client.commercial or '' }}">
 
-          <input type="hidden" id="line_count" name="line_count" value="{{ lines|length }}">
+  <input type="hidden" id="line_count" name="line_count" value="{{ lines|length }}">
 
-          <div id="lines_container" class="grid-lines">
-            {% for line in lines %}
-              <div class="line-card">
-                <div class="line-head">
-                  <strong>Línea {{ loop.index }}</strong>
-                  <button type="button" class="btn light small" onclick="removeLine(this)">Quitar</button>
-                </div>
+  <div id="lines_container" class="grid-lines">
+    {% for line in lines %}
+      <div class="line-card">
+        <div class="line-head">
+          <strong>Línea {{ loop.index }}</strong>
+          <button type="button" class="btn light small" onclick="removeLine(this)">Quitar</button>
+        </div>
 
-                <div class="row">
-                  <div>
-                    <label>Número</label>
-                    <input name="line_number_{{ loop.index0 }}" value="{{ line.line_number or '' }}">
-                  </div>
-                  <div>
-                    <label>PIN</label>
-                    <input name="pin_{{ loop.index0 }}" value="{{ line.pin or '' }}">
-                  </div>
-                  <div>
-                    <label>PUK</label>
-                    <input name="puk_{{ loop.index0 }}" value="{{ line.puk or '' }}">
-                  </div>
-                </div>
+        <div class="row">
+          <div>
+            <label>Número</label>
+            <input name="line_number_{{ loop.index0 }}" value="{{ line.line_number or '' }}">
+          </div>
+          <div>
+            <label>PIN</label>
+            <input name="pin_{{ loop.index0 }}" value="{{ line.pin or '' }}">
+          </div>
+          <div>
+            <label>PUK</label>
+            <input name="puk_{{ loop.index0 }}" value="{{ line.puk or '' }}">
+          </div>
+        </div>
 
-                <div style="height:10px;"></div>
+        <div style="height:10px;"></div>
 
-                <div class="row">
-                  <div>
-                    <label>ICC</label>
-                    <input name="icc_{{ loop.index0 }}" value="{{ line.icc or '' }}">
-                  </div>
-                  <div style="grid-column: span 2;">
-                    <label>Cuenta Google / iPhone</label>
-                    <input name="account_{{ loop.index0 }}" value="{{ line.google_or_iphone_account or '' }}">
-                  </div>
-                </div>
-              </div>
-            {% endfor %}
+        <div class="row">
+          <div>
+            <label>ICC</label>
+            <input name="icc_{{ loop.index0 }}" value="{{ line.icc or '' }}">
           </div>
 
-          <div class="actions">
-            <button type="button" class="btn secondary" onclick="addLine()">Añadir línea</button>
-            <button type="submit" class="btn">Guardar líneas</button>
+          <div>
+            <label>Fin permanencia (línea)</label>
+            <input type="date" name="line_perm_end_{{ loop.index0 }}" value="{{ line.permanence_end_date or '' }}">
           </div>
-        </form>
+
+          <div>
+            <label>Cuenta Google / iPhone</label>
+            <input name="account_{{ loop.index0 }}" value="{{ line.google_or_iphone_account or '' }}">
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn secondary" onclick="addLine()">Añadir línea</button>
+    <button type="submit" class="btn">Guardar líneas</button>
+  </div>
+</form>
+
 
         <div class="hr"></div>
 
@@ -490,6 +497,8 @@
         ["puk_", "puk_"],
         ["icc_", "icc_"],
         ["account_", "account_"]
+        ["line_perm_end_", "line_perm_end_"],
+
       ];
 
       const inputs = card.querySelectorAll("input");
