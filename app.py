@@ -486,6 +486,9 @@ def api_permanencias():
 def new_client():
     if request.method == "POST":
         db = get_db()
+        print("FORM_KEYS:", sorted(list(request.form.keys())))
+        print("FORM_DATA:", dict(request.form))
+
 
         p_start, p_months, p_end = compute_permanence_end(
             request.form.get("permanence_start_date") or request.form.get("permanence_start"),
@@ -574,6 +577,9 @@ def view_client(client_id):
 @login_required
 def update_client(client_id):
     db = get_db()
+        print("FORM_KEYS:", sorted(list(request.form.keys())))
+        print("FORM_DATA:", dict(request.form))
+
 
     p_start, p_months, p_end = compute_permanence_end(
         request.form.get("permanence_start_date") or request.form.get("permanence_start"),
