@@ -27,9 +27,6 @@
         </thead>
         <tbody>
 
-          {# clients puede venir como lista normal o como (cliente, days_left).
-             Si viene normal, days_left será none y no rompe nada. #}
-
           {% for item in clients %}
             {% if item is sequence and item|length == 2 %}
               {% set c = item[0] %}
@@ -39,9 +36,8 @@
               {% set days_left = none %}
             {% endif %}
 
-            {# Sacar fin permanencia desde "permanence" (puede venir "YYYY-MM-DD | texto...") #}
-            {% set perm_raw = (c.permanence or '') %}
-            {% set perm_end = perm_raw.split('|')[0].strip() %}
+            {# Fin permanencia: primero el campo nuevo, si no, el viejo, si no, vacío #}
+            {% set perm_end = (c.permanence_end_date or c.permanence_end or '') %}
 
             <tr>
               <td>{{ c.id }}</td>
@@ -50,7 +46,7 @@
               <td>{{ c.phone or '' }}</td>
               <td>{{ c.current_operator or '' }}</td>
 
-              <td>{{ perm_end if perm_end else '' }}</td>
+              <td>{{ perm_end }}</td>
 
               <td>
                 {% if days_left is not none %}
