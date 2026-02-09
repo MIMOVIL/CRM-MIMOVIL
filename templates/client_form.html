@@ -64,11 +64,16 @@
 
       <h1>
         {% if client %}Cliente #{{ client.id }}{% else %}Nuevo cliente{% endif %}
-        {% if days_left is not none %}
-          <span class="pill" style="margin-left:10px;">
-            {% if days_left >= 0 %}Quedan {{ days_left }} días{% else %}Vencida hace {{ (days_left * -1) }} días{% endif %}
-          </span>
-        {% endif %}
+       {% if days_left is defined and days_left is not none %}
+  <span class="pill" style="margin-left:10px;">
+    {% if days_left >= 0 %}
+      Quedan {{ days_left }} días
+    {% else %}
+      Vencida hace {{ -days_left }} días
+    {% endif %}
+  </span>
+{% endif %}
+
       </h1>
 
       <form method="post"
