@@ -112,7 +112,7 @@ def init_db():
     _add_col_if_missing(db, "clients", "permanence_months", "INTEGER")
     _add_col_if_missing(db, "clients", "permanence_end_date", "TEXT")
 
-    # Nuevo: Comercial
+    # Comercial
     _add_col_if_missing(db, "clients", "commercial", "TEXT")
 
     # ---- Mobile lines ----
@@ -129,7 +129,6 @@ def init_db():
             FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
         );
     """)
-    # Nuevo: fin permanencia por línea
     _add_col_if_missing(db, "mobile_lines", "permanence_end_date", "TEXT")
 
     # ---- Repairs ----
@@ -460,7 +459,13 @@ def new_client():
         db.commit()
         return redirect(url_for("view_client", client_id=client_id))
 
-    return render_template("client_form.html", client=None, lines=[], repairs=[], sales=[], alert_days=ALERT_DAYS)
+    # days_left se pasa como None para evitar problemas en plantilla
+    return render_template(
+        "client_form.html",
+        client=None, lines=[], repairs=[], sales=[],
+        alert_days=ALERT_DAYS,
+        days_left=None
+    )
 
 
 @app.route("/clients/<int:client_id>")
@@ -507,11 +512,19 @@ def view_client(client_id):
 def update_client(client_id):
     db = get_db()
 
+    # 1) Calculamos permanencia con lo que venga del formulario
     p_start, p_months, p_end = compute_permanence_end(
         request.form.get("permanence_start_date") or request.form.get("permanence_start"),
         request.form.get("permanence_months"),
         request.form.get("permanence_end_date") or request.form.get("permanence_end"),
     )
+
+    # 2) MUY IMPORTANTE: si no viene p_end (vacío), NO lo borres: conserva el actual
+    if not p_end:
+        current = db.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
+        old_end = get_end_date_from_client_row(current)
+        if old_end:
+            p_end = old_end
 
     db.execute("""
         UPDATE clients SET
@@ -570,39 +583,45 @@ def update_client(client_id):
 
     # -------------------------
     # Guardar líneas móviles
+    # SOLO si el formulario trae line_count
+    # (esto evita que "Guardar cliente" borre las líneas)
     # -------------------------
-    db.execute("DELETE FROM mobile_lines WHERE client_id = ?", (client_id,))
+    line_count_raw = request.form.get("line_count", None)
 
-    line_count = int(request.form.get("line_count", "0") or "0")
-    for i in range(line_count):
-        line_number = (request.form.get(f"line_number_{i}") or "").strip()
-        pin = (request.form.get(f"pin_{i}") or "").strip()
-        puk = (request.form.get(f"puk_{i}") or "").strip()
-        icc = (request.form.get(f"icc_{i}") or "").strip()
-        account = (request.form.get(f"account_{i}") or "").strip()
+    if line_count_raw is not None:
+        db.execute("DELETE FROM mobile_lines WHERE client_id = ?", (client_id,))
 
-        # Nuevo: fin permanencia por línea
-        line_perm_end = (request.form.get(f"line_perm_end_{i}") or "").strip()
+        try:
+            line_count = int(line_count_raw or 0)
+        except ValueError:
+            line_count = 0
 
-        # Si no hay nada, saltamos
-        if not (line_number or pin or puk or icc or account or line_perm_end):
-            continue
+        for i in range(line_count):
+            line_number = (request.form.get(f"line_number_{i}") or "").strip()
+            pin = (request.form.get(f"pin_{i}") or "").strip()
+            puk = (request.form.get(f"puk_{i}") or "").strip()
+            icc = (request.form.get(f"icc_{i}") or "").strip()
+            account = (request.form.get(f"account_{i}") or "").strip()
+            line_perm_end = (request.form.get(f"line_perm_end_{i}") or "").strip()
 
-        db.execute("""
-            INSERT INTO mobile_lines (
-                client_id, line_number, pin, puk, icc,
-                google_or_iphone_account, permanence_end_date, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            client_id,
-            line_number,
-            pin,
-            puk,
-            icc,
-            account,
-            line_perm_end,
-            datetime.utcnow().isoformat()
-        ))
+            if not (line_number or pin or puk or icc or account or line_perm_end):
+                continue
+
+            db.execute("""
+                INSERT INTO mobile_lines (
+                    client_id, line_number, pin, puk, icc,
+                    google_or_iphone_account, permanence_end_date, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                client_id,
+                line_number,
+                pin,
+                puk,
+                icc,
+                account,
+                line_perm_end,
+                datetime.utcnow().isoformat()
+            ))
 
     db.commit()
     flash("Cliente actualizado", "success")
