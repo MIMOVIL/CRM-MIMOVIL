@@ -3,11 +3,26 @@
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
       <h2 style="margin:0;">Clientes</h2>
-      <a class="btn" href="{{ url_for('new_client') }}">+ Nuevo cliente</a>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        {% if pending %}
+          <a class="btn secondary" href="{{ url_for('clients', q=q) }}">Ver todos</a>
+        {% else %}
+          <a class="btn secondary" href="{{ url_for('clients', q=q, pending=1) }}">Solo pendientes</a>
+        {% endif %}
+
+        <a class="btn" href="{{ url_for('new_client') }}">+ Nuevo cliente</a>
+      </div>
     </div>
 
     <form method="get" action="{{ url_for('clients') }}" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
       <input name="q" value="{{ q }}" placeholder="Buscar por nombre, DNI o teléfono" />
+
+      {# Mantener el filtro cuando buscas #}
+      {% if pending %}
+        <input type="hidden" name="pending" value="1">
+      {% endif %}
+
       <button class="btn secondary" type="submit">Buscar</button>
     </form>
 
@@ -26,7 +41,6 @@
           </tr>
         </thead>
         <tbody>
-
           {% for item in clients %}
             {% if item is sequence and item|length == 2 %}
               {% set c = item[0] %}
@@ -36,8 +50,8 @@
               {% set days_left = none %}
             {% endif %}
 
-            {# Fin permanencia: primero el campo nuevo, si no, el viejo, si no, vacío #}
             {% set perm_end = (c.permanence_end_date or c.permanence_end or '') %}
+            {% set pending_text = (c.pending_tasks or '')|trim %}
 
             <tr>
               <td>{{ c.id }}</td>
@@ -49,12 +63,21 @@
               <td>{{ perm_end }}</td>
 
               <td>
+                {% if pending_text %}
+                  <span style="font-weight:900;">📌 Pendiente</span>
+                  <div style="font-size:12px; opacity:.75; margin-top:4px;">
+                    {{ pending_text[:60] }}{% if pending_text|length > 60 %}…{% endif %}
+                  </div>
+                {% endif %}
+
                 {% if days_left is not none %}
-                  {% if days_left <= alert_days %}
-                    <span style="font-weight:800; color:#b00020;">⚠ {{ days_left }} días</span>
-                  {% else %}
-                    {{ days_left }} días
-                  {% endif %}
+                  <div style="margin-top:6px;">
+                    {% if days_left <= alert_days %}
+                      <span style="font-weight:800; color:#b00020;">⚠ {{ days_left }} días</span>
+                    {% else %}
+                      {{ days_left }} días
+                    {% endif %}
+                  </div>
                 {% endif %}
               </td>
 
