@@ -327,18 +327,39 @@ def logout():
 def clients():
     db = get_db()
     q = request.args.get("q", "").strip()
+    only_pending = request.args.get("pending", "0").strip() == "1"
+
+    where = []
+    params = []
 
     if q:
-        rows = db.execute(
-            """
-            SELECT * FROM clients
-            WHERE full_name LIKE ? OR dni LIKE ? OR phone LIKE ?
-            ORDER BY id DESC
-            """,
-            (f"%{q}%", f"%{q}%", f"%{q}%")
-        ).fetchall()
-    else:
-        rows = db.execute("SELECT * FROM clients ORDER BY id DESC").fetchall()
+        where.append("(full_name LIKE ? OR dni LIKE ? OR phone LIKE ?)")
+        params.extend([f"%{q}%", f"%{q}%", f"%{q}%"])
+
+    if only_pending:
+        where.append("(pending_tasks IS NOT NULL AND TRIM(pending_tasks) != '')")
+
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+
+    rows = db.execute(
+        f"SELECT * FROM clients {where_sql} ORDER BY id DESC",
+        tuple(params)
+    ).fetchall()
+
+    days_left_map = {}
+    for c in rows:
+        end_iso = get_end_date_from_client_row(c)
+        days_left_map[c["id"]] = days_until(end_iso) if end_iso else None
+
+    return render_template(
+        "clients_list.html",
+        clients=rows,
+        q=q,
+        alert_days=ALERT_DAYS,
+        days_left_map=days_left_map,
+        pending=only_pending
+    )
+
 
     days_left_map = {}
     for c in rows:
