@@ -17,11 +17,22 @@
 
     <form method="get" action="{{ url_for('clients') }}" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
       <input name="q" value="{{ q }}" placeholder="Buscar por nombre, DNI o teléfono" />
+<select name="status">
+  <option value="">Todos los estados</option>
+  {% for s in ["PENDIENTE DE TRAMITAR","TRAMITADO","PENDIENTE INSTALACION","INSTALADO","ACTIVADO","EN INCIDENCIA","CANCELADO"] %}
+    <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s }}</option>
+  {% endfor %}
+</select>
+
 
       {# Mantener el filtro cuando buscas #}
       {% if pending %}
         <input type="hidden" name="pending" value="1">
       {% endif %}
+{% if status_filter %}
+  <input type="hidden" name="status" value="{{ status_filter }}">
+{% endif %}
+
 
       <button class="btn secondary" type="submit">Buscar</button>
     </form>
@@ -29,17 +40,19 @@
     <div style="margin-top:14px; overflow:auto;">
       <table>
         <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>DNI</th>
-            <th>Teléfono</th>
-            <th>Operador</th>
-            <th>Fin permanencia</th>
-            <th>Aviso</th>
-            <th></th>
-          </tr>
-        </thead>
+  <tr>
+    <th>ID</th>
+    <th>Nombre</th>
+    <th>DNI</th>
+    <th>Teléfono</th>
+    <th>Operador</th>
+    <th>Estado</th>
+    <th>Fin permanencia</th>
+    <th>Aviso</th>
+    <th></th>
+  </tr>
+</thead>
+
         <tbody>
           {% for item in clients %}
             {% if item is sequence and item|length == 2 %}
@@ -59,8 +72,9 @@
               <td>{{ c.dni }}</td>
               <td>{{ c.phone or '' }}</td>
               <td>{{ c.current_operator or '' }}</td>
-
+              <td>{{ c.status or '' }}</td>
               <td>{{ perm_end }}</td>
+
 
               <td>
                 {% if pending_text %}
