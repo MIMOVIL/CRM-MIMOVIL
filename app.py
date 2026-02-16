@@ -114,6 +114,8 @@ def init_db():
 
     # Comercial
     _add_col_if_missing(db, "clients", "commercial", "TEXT")
+    _add_col_if_missing(db, "clients", "status", "TEXT")
+
 
     # ---- Mobile lines ----
     db.execute("""
@@ -328,6 +330,8 @@ def clients():
     db = get_db()
     q = request.args.get("q", "").strip()
     only_pending = request.args.get("pending", "0").strip() == "1"
+    status_filter = request.args.get("status", "").strip()
+
 
     where = []
     params = []
@@ -338,6 +342,10 @@ def clients():
 
     if only_pending:
         where.append("(pending_tasks IS NOT NULL AND TRIM(pending_tasks) != '')")
+    if status_filter:
+        where.append("status = ?")
+        params.append(status_filter)
+
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
@@ -357,7 +365,9 @@ def clients():
         q=q,
         alert_days=ALERT_DAYS,
         days_left_map=days_left_map,
-        pending=only_pending
+        pending=only_pending,
+        status_filter=status_filter
+
     )
 
 
@@ -453,7 +463,8 @@ def new_client():
                 permanence_start, permanence_end,
                 permanence_start_date, permanence_months, permanence_end_date,
                 terminal, sales_done, repairs_done, procedures_done, observations,
-                pending_tasks, commercial, created_at
+                pending_tasks, commercial, status, created_at
+
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             request.form["full_name"],
@@ -474,7 +485,9 @@ def new_client():
             request.form.get("observations"),
             request.form.get("pending_tasks"),
             request.form.get("commercial"),
+            request.form.get("status"),
             datetime.utcnow().isoformat()
+
         ))
         client_id = cur.lastrowid
         db.commit()
@@ -572,7 +585,9 @@ def update_client(client_id):
             procedures_done = ?,
             observations = ?,
             pending_tasks = ?,
-            commercial = ?
+            commercial = ?,
+            status = ?
+
         WHERE id = ?
     """, (
         request.form["full_name"],
@@ -599,7 +614,9 @@ def update_client(client_id):
         request.form.get("observations"),
         request.form.get("pending_tasks"),
         request.form.get("commercial"),
+        request.form.get("status"),
         client_id
+
     ))
 
     # -------------------------
