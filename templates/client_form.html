@@ -180,6 +180,27 @@
 
 <div style="height:12px;"></div>
 
+<div class="row">
+  <div>
+    <label>Estado</label>
+    <select name="status">
+      {% set st = client.status if client else '' %}
+      <option value="">— Seleccionar —</option>
+
+      <option value="PENDIENTE DE TRAMITAR" {% if st=='PENDIENTE DE TRAMITAR' %}selected{% endif %}>PENDIENTE DE TRAMITAR</option>
+      <option value="TRAMITADO" {% if st=='TRAMITADO' %}selected{% endif %}>TRAMITADO</option>
+      <option value="PENDIENTE INSTALACION" {% if st=='PENDIENTE INSTALACION' %}selected{% endif %}>PENDIENTE INSTALACION</option>
+      <option value="INSTALADO" {% if st=='INSTALADO' %}selected{% endif %}>INSTALADO</option>
+      <option value="ACTIVADO" {% if st=='ACTIVADO' %}selected{% endif %}>ACTIVADO</option>
+      <option value="EN INCIDENCIA" {% if st=='EN INCIDENCIA' %}selected{% endif %}>EN INCIDENCIA</option>
+      <option value="CANCELADO" {% if st=='CANCELADO' %}selected{% endif %}>CANCELADO</option>
+    </select>
+  </div>
+</div>
+
+<div style="height:12px;"></div>
+
+
 
         <div class="row">
           <div>
