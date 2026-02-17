@@ -112,10 +112,9 @@ def init_db():
     _add_col_if_missing(db, "clients", "permanence_months", "INTEGER")
     _add_col_if_missing(db, "clients", "permanence_end_date", "TEXT")
 
-    # Comercial
+    # Comercial + Estado
     _add_col_if_missing(db, "clients", "commercial", "TEXT")
     _add_col_if_missing(db, "clients", "status", "TEXT")
-
 
     # ---- Mobile lines ----
     db.execute("""
@@ -332,7 +331,6 @@ def clients():
     only_pending = request.args.get("pending", "0").strip() == "1"
     status_filter = request.args.get("status", "").strip()
 
-
     where = []
     params = []
 
@@ -342,10 +340,10 @@ def clients():
 
     if only_pending:
         where.append("(pending_tasks IS NOT NULL AND TRIM(pending_tasks) != '')")
+
     if status_filter:
         where.append("status = ?")
         params.append(status_filter)
-
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
@@ -367,21 +365,6 @@ def clients():
         days_left_map=days_left_map,
         pending=only_pending,
         status_filter=status_filter
-
-    )
-
-
-    days_left_map = {}
-    for c in rows:
-        end_iso = get_end_date_from_client_row(c)
-        days_left_map[c["id"]] = days_until(end_iso) if end_iso else None
-
-    return render_template(
-        "clients_list.html",
-        clients=rows,
-        q=q,
-        alert_days=ALERT_DAYS,
-        days_left_map=days_left_map
     )
 
 
@@ -464,8 +447,15 @@ def new_client():
                 permanence_start_date, permanence_months, permanence_end_date,
                 terminal, sales_done, repairs_done, procedures_done, observations,
                 pending_tasks, commercial, status, created_at
-
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?,
+                ?, ?,
+                ?,
+                ?, ?,
+                ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?
+            )
         """, (
             request.form["full_name"],
             request.form["dni"],
@@ -473,27 +463,32 @@ def new_client():
             request.form.get("phone"),
             request.form.get("address"),
             request.form.get("email"),
+
             request.form.get("current_operator"),
             request.form.get("current_tariff_price"),
+
             request.form.get("permanence"),
+
             p_start, p_end,
+
             p_start, p_months, p_end,
+
             request.form.get("terminal"),
             request.form.get("sales_done"),
             request.form.get("repairs_done"),
             request.form.get("procedures_done"),
             request.form.get("observations"),
+
             request.form.get("pending_tasks"),
             request.form.get("commercial"),
             request.form.get("status"),
             datetime.utcnow().isoformat()
-
         ))
+
         client_id = cur.lastrowid
         db.commit()
         return redirect(url_for("view_client", client_id=client_id))
 
-    # days_left se pasa como None para evitar problemas en plantilla
     return render_template(
         "client_form.html",
         client=None, lines=[], repairs=[], sales=[],
@@ -546,14 +541,13 @@ def view_client(client_id):
 def update_client(client_id):
     db = get_db()
 
-    # 1) Calculamos permanencia con lo que venga del formulario
     p_start, p_months, p_end = compute_permanence_end(
         request.form.get("permanence_start_date") or request.form.get("permanence_start"),
         request.form.get("permanence_months"),
         request.form.get("permanence_end_date") or request.form.get("permanence_end"),
     )
 
-    # 2) MUY IMPORTANTE: si no viene p_end (vacío), NO lo borres: conserva el actual
+    # Si p_end viene vacío, conserva el actual
     if not p_end:
         current = db.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
         old_end = get_end_date_from_client_row(current)
@@ -587,7 +581,6 @@ def update_client(client_id):
             pending_tasks = ?,
             commercial = ?,
             status = ?
-
         WHERE id = ?
     """, (
         request.form["full_name"],
@@ -616,13 +609,10 @@ def update_client(client_id):
         request.form.get("commercial"),
         request.form.get("status"),
         client_id
-
     ))
 
     # -------------------------
-    # Guardar líneas móviles
-    # SOLO si el formulario trae line_count
-    # (esto evita que "Guardar cliente" borre las líneas)
+    # Guardar líneas móviles SOLO si viene line_count
     # -------------------------
     line_count_raw = request.form.get("line_count", None)
 
