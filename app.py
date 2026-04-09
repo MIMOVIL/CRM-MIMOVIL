@@ -5,9 +5,11 @@ from functools import wraps
 
 from flask import (
     Flask, g, redirect, render_template, request, session,
-    url_for, flash, jsonify
+    url_for, flash, jsonify, send_file
 )
 from authlib.integrations.flask_client import OAuth
+import io
+from openpyxl import Workbook
 
 # =========================
 # Config
@@ -425,7 +427,47 @@ def api_permanencias():
     out.sort(key=lambda x: x["permanence_end_date"] or "9999-12-31")
     return jsonify(out)
 
+@app.route("/clients/export/excel")
+@login_required
+def export_clients_excel():
+    db = get_db()
 
+    rows = db.execute("SELECT * FROM clients ORDER BY id DESC").fetchall()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Clientes"
+
+    # Cabeceras
+    ws.append([
+        "ID", "Nombre", "DNI", "Telefono",
+        "Operador", "Fin permanencia", "Estado", "Pendiente"
+    ])
+
+    for c in rows:
+        end = c["permanence_end_date"] or c["permanence_end"]
+
+        ws.append([
+            c["id"],
+            c["full_name"],
+            c["dni"],
+            c["phone"],
+            c["current_operator"],
+            end,
+            c["status"],
+            c["pending_tasks"]
+        ])
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="clientes.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 @app.route("/clients/new", methods=["GET", "POST"])
 @login_required
 def new_client():
