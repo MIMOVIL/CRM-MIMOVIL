@@ -353,13 +353,13 @@ def clients():
         where.append("commercial = ?")
         params.append(commercial_filter)
 
-if start_from:
-    where.append("permanence_start_date >= ?")
-    params.append(start_from)
+    if start_from:
+       where.append("permanence_start_date >= ?")
+       params.append(start_from)
 
-if start_to:
-    where.append("permanence_start_date <= ?")
-    params.append(start_to)
+    if start_to:
+       where.append("permanence_start_date <= ?")
+       params.append(start_to)
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
