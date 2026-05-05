@@ -380,7 +380,7 @@ def clients():
         alert_days=ALERT_DAYS,
         days_left_map=days_left_map,
         pending=only_pending,
-        status_filter=status_filter
+        status_filter=status_filter,
         operator_filter=operator_filter,
     )
 
