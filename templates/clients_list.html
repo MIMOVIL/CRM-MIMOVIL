@@ -60,9 +60,9 @@
     <th>Operador</th>
     <th>Comercial</th>
     <th>Estado</th>
-    <th>Fin permanencia</th>
-    <th>Aviso</th>
-    <th></th>
+   <th>Fin permanencia</th>
+   <th></th>
+   <th>Aviso</th>
   </tr>
 </thead>
 
@@ -88,11 +88,11 @@
               <td><strong>{{ c["commercial"] }}</strong></td>
               <td>{{ c.status or '' }}</td>
               <td>{{ perm_end }}</td>
-
-
               <td>
-                {% if pending_text %}
-                  <span style="font-weight:900;">📌 Pendiente</span>
+                <a class="btn secondary" href="{{ url_for('view_client', client_id=c.id) }}">Abrir</a>
+              </td>
+              <td>
+              {% if pending_text %}
                   <div style="font-size:12px; opacity:.75; margin-top:4px;">
                     {{ pending_text[:60] }}{% if pending_text|length > 60 %}…{% endif %}
                   </div>
@@ -109,9 +109,7 @@
                 {% endif %}
               </td>
 
-              <td>
-                <a class="btn secondary" href="{{ url_for('view_client', client_id=c.id) }}">Abrir</a>
-              </td>
+              
             </tr>
           {% endfor %}
 
