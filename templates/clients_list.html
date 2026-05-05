@@ -27,16 +27,9 @@
 
 <select name="operator">
   <option value="">Todos los operadores</option>
-  <option value="YOIGO">YOIGO</option>
-  <option value="ORANGE">ORANGE</option>
-  <option value="VODAFONE">VODAFONE</option>
-  <option value="FINETWORK">FINETWORK</option>
-  <option value="AVATEL">AVATEL</option>
-  <option value="DIGI">DIGI</option>
-  <option value="LOWI">LOWI</option>
-  <option value="APROOP">APROOP</option>
-  <option value="MASMOVIL">MASMOVIL</option>
-  <option value="MIMOVIL">MIMOVIL</option>
+  {% for op in ["YOIGO","ORANGE","VODAFONE","FINETWORK","AVATEL","DIGI","LOWI","APROOP","MASMOVIL","MIMOVIL"] %}
+    <option value="{{ op }}" {% if operator_filter == op %}selected{% endif %}>{{ op }}</option>
+  {% endfor %}
 </select>
 
 <input type="date" name="start_from">
@@ -65,6 +58,7 @@
     <th>DNI</th>
     <th>Teléfono</th>
     <th>Operador</th>
+    <th>Comercial</th>
     <th>Estado</th>
     <th>Fin permanencia</th>
     <th>Aviso</th>
@@ -91,6 +85,7 @@
               <td>{{ c.dni }}</td>
               <td>{{ c.phone or '' }}</td>
               <td>{{ c.current_operator or '' }}</td>
+              <td><strong>{{ c["commercial"] }}</strong></td>
               <td>{{ c.status or '' }}</td>
               <td>{{ perm_end }}</td>
 
