@@ -332,7 +332,7 @@ def clients():
     q = request.args.get("q", "").strip()
     only_pending = request.args.get("pending", "0").strip() == "1"
     status_filter = request.args.get("status", "").strip()
-    commercial_filter = request.args.get("commercial", "").strip()
+    operator_filter = request.args.get("operator", "").strip()
     start_from = request.args.get("start_from", "").strip()
     start_to = request.args.get("start_to", "").strip()
 
@@ -349,9 +349,9 @@ def clients():
     if status_filter:
         where.append("status = ?")
         params.append(status_filter)
-    if commercial_filter:
-        where.append("commercial = ?")
-        params.append(commercial_filter)
+    if operator_filter:
+        where.append("current_operator = ?")
+        params.append(operator_filter)
 
     if start_from:
        where.append("permanence_start_date >= ?")
@@ -381,6 +381,7 @@ def clients():
         days_left_map=days_left_map,
         pending=only_pending,
         status_filter=status_filter
+        operator_filter=operator_filter,
     )
 
 
