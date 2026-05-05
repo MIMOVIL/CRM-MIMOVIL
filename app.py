@@ -332,6 +332,9 @@ def clients():
     q = request.args.get("q", "").strip()
     only_pending = request.args.get("pending", "0").strip() == "1"
     status_filter = request.args.get("status", "").strip()
+    commercial_filter = request.args.get("commercial", "").strip()
+    start_from = request.args.get("start_from", "").strip()
+    start_to = request.args.get("start_to", "").strip()
 
     where = []
     params = []
@@ -346,6 +349,17 @@ def clients():
     if status_filter:
         where.append("status = ?")
         params.append(status_filter)
+    if commercial_filter:
+        where.append("commercial = ?")
+        params.append(commercial_filter)
+
+if start_from:
+    where.append("permanence_start_date >= ?")
+    params.append(start_from)
+
+if start_to:
+    where.append("permanence_start_date <= ?")
+    params.append(start_to)
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
