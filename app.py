@@ -445,8 +445,65 @@ def api_permanencias():
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
 def import_clients():
-    return render_template("import_excel.html")
 
+    if request.method == "POST":
+
+        file = request.files.get("file")
+
+        if not file:
+            flash("No se seleccionó archivo")
+            return redirect(url_for("import_clients"))
+
+        wb = load_workbook(file)
+        ws = wb.active
+
+        db = get_db()
+
+        for row in ws.iter_rows(min_row=2, values_only=True):
+
+            try:
+                full_name = row[0]
+                dni = row[1]
+                phone = row[2]
+                operator = row[3]
+                status = row[4]
+                permanence_end = row[5]
+                pending_tasks = row[6]
+
+                db.execute("""
+                    INSERT INTO clients (
+                        full_name,
+                        dni,
+                        phone,
+                        current_operator,
+                        status,
+                        permanence_end,
+                        permanence_end_date,
+                        pending_tasks,
+                        created_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    full_name,
+                    dni,
+                    phone,
+                    operator,
+                    status,
+                    permanence_end,
+                    permanence_end,
+                    pending_tasks,
+                    datetime.utcnow().isoformat()
+                ))
+
+            except Exception as e:
+                print("ERROR IMPORTANDO:", e)
+
+        db.commit()
+
+        flash("Clientes importados correctamente")
+        return redirect(url_for("clients"))
+
+    return render_template("import_excel.html")
 
 @app.route("/clients/export/excel")
 @login_required
