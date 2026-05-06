@@ -462,15 +462,28 @@ def dashboard():
         AND TRIM(permanence_start_date) != ''
         AND strftime('%Y-%m', permanence_start_date) = strftime('%Y-%m', 'now')
     """).fetchone()["total"]
-    upcoming_permanences = db.execute("""
-        SELECT COUNT(*) as total
-        FROM clients
-        WHERE (permanence_end_date IS NOT NULL OR permanence_end IS NOT NULL)
-        AND TRIM(COALESCE(permanence_end_date, permanence_end, '')) != ''
-        AND date(COALESCE(permanence_end_date, permanence_end))
-        BETWEEN date('now')
-        AND date('now', '+30 day')
-""").fetchone()["total"]
+    upcoming_permanences = 0
+
+rows = db.execute("""
+    SELECT permanence_end_date, permanence_end
+    FROM clients
+""").fetchall()
+
+for r in rows:
+    end_date = r["permanence_end_date"] or r["permanence_end"]
+
+    if end_date:
+        try:
+            d, m, y = end_date.split("/")
+            end = date(int(y), int(m), int(d))
+
+            days_left = (end - date.today()).days
+
+            if 0 <= days_left <= 30:
+                upcoming_permanences += 1
+
+        except:
+            pass
     
     return render_template(
         "dashboard.html",
