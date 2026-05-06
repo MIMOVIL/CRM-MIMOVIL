@@ -465,9 +465,9 @@ def dashboard():
     upcoming_permanences = db.execute("""
         SELECT COUNT(*) as total
         FROM clients
-        WHERE permanence_end_date IS NOT NULL
-        AND TRIM(permanence_end_date) != ''
-        AND date(permanence_end_date)
+        WHERE (permanence_end_date IS NOT NULL OR permanence_end IS NOT NULL)
+        AND TRIM(COALESCE(permanence_end_date, permanence_end, '')) != ''
+        AND date(COALESCE(permanence_end_date, permanence_end))
         BETWEEN date('now')
         AND date('now', '+30 day')
 """).fetchone()["total"]
