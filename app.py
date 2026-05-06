@@ -655,6 +655,7 @@ def new_client():
             request.form.get("pending_tasks"),
             request.form.get("commercial"),
             request.form.get("status"),
+            request.form.get("service_type"),
             datetime.utcnow().isoformat()
         ))
 
@@ -781,6 +782,7 @@ def update_client(client_id):
         request.form.get("pending_tasks"),
         request.form.get("commercial"),
         request.form.get("status"),
+        request.form.get("service_type"),
         client_id
     ))
 
