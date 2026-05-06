@@ -449,12 +449,14 @@ def dashboard():
     total_clients = db.execute(
         "SELECT COUNT(*) as total FROM clients"
     ).fetchone()["total"]
+
     pending_tasks = db.execute("""
         SELECT COUNT(*) as total
         FROM clients
         WHERE pending_tasks IS NOT NULL
         AND TRIM(pending_tasks) != ''
-""").fetchone()["total"]
+    """).fetchone()["total"]
+
     month_contracts = db.execute("""
         SELECT COUNT(*) as total
         FROM clients
@@ -462,36 +464,35 @@ def dashboard():
         AND TRIM(permanence_start_date) != ''
         AND strftime('%Y-%m', permanence_start_date) = strftime('%Y-%m', 'now')
     """).fetchone()["total"]
+
     upcoming_permanences = 0
 
-rows = db.execute("""
-    SELECT permanence_end_date, permanence_end
-    FROM clients
-""").fetchall()
+    rows = db.execute("""
+        SELECT permanence_end_date, permanence_end
+        FROM clients
+    """).fetchall()
 
     for r in rows:
         end_date = r["permanence_end_date"] or r["permanence_end"]
-    
+
         if end_date:
             try:
                 d, m, y = end_date.split("/")
                 end = date(int(y), int(m), int(d))
-    
                 days_left = (end - date.today()).days
-    
+
                 if 0 <= days_left <= 30:
                     upcoming_permanences += 1
-    
             except:
                 pass
-        
-        return render_template(
-            "dashboard.html",
-            total_clients=total_clients,
-            pending_tasks=pending_tasks,
-            month_contracts=month_contracts,
-            upcoming_permanences=upcoming_permanences
-        )
+
+    return render_template(
+        "dashboard.html",
+        total_clients=total_clients,
+        pending_tasks=pending_tasks,
+        month_contracts=month_contracts,
+        upcoming_permanences=upcoming_permanences
+    )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
 def import_clients():
