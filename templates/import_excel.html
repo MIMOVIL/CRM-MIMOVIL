@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="card" style="max-width:700px; margin:auto;">
+
+  <h2>Importar Excel</h2>
+
+  <form method="POST" enctype="multipart/form-data">
+
+    <input type="file" name="excel_file" accept=".xlsx" required>
+
+    <div style="margin-top:16px;">
+      <button class="btn" type="submit">
+        Importar clientes
+      </button>
+    </div>
+
+  </form>
+
+  <div style="margin-top:24px; opacity:.7;">
+    Formato esperado:
+    <br><br>
+
+    Nombre | DNI | Telefono | Email | Operador | Inicio permanencia | Fin permanencia | Estado | Pendiente
+
+  </div>
+
+</div>
+
+{% endblock %}
