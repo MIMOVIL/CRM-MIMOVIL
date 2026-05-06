@@ -9,7 +9,7 @@ from flask import (
 )
 from authlib.integrations.flask_client import OAuth
 import io
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
 # =========================
 # Config
