@@ -455,10 +455,18 @@ def dashboard():
         WHERE pending_tasks IS NOT NULL
         AND TRIM(pending_tasks) != ''
 """).fetchone()["total"]
+        month_contracts = db.execute("""
+        SELECT COUNT(*) as total
+        FROM clients
+        WHERE permanence_start_date IS NOT NULL
+        AND TRIM(permanence_start_date) != ''
+        AND strftime('%Y-%m', permanence_start_date) = strftime('%Y-%m', 'now')
+    """).fetchone()["total"]
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
         pending_tasks=pending_tasks
+        month_contracts=month_contracts
     )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
