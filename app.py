@@ -462,12 +462,22 @@ def dashboard():
         AND TRIM(permanence_start_date) != ''
         AND strftime('%Y-%m', permanence_start_date) = strftime('%Y-%m', 'now')
     """).fetchone()["total"]
+    upcoming_permanences = db.execute("""
+        SELECT COUNT(*) as total
+        FROM clients
+        WHERE permanence_end_date IS NOT NULL
+        AND TRIM(permanence_end_date) != ''
+        AND date(permanence_end_date)
+        BETWEEN date('now')
+        AND date('now', '+30 day')
+""").fetchone()["total"]
     
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
         pending_tasks=pending_tasks,
-        month_contracts=month_contracts
+        month_contracts=month_contracts,
+        upcoming_permanences=upcoming_permanences
     )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
