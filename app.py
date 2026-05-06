@@ -441,7 +441,10 @@ def api_permanencias():
 
     out.sort(key=lambda x: x["permanence_end_date"] or "9999-12-31")
     return jsonify(out)
-
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return "Dashboard en construcción"
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
 def import_clients():
