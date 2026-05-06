@@ -80,8 +80,8 @@ header img {
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
         <a class="btn secondary" href="{{ url_for('clients') }}">Clientes</a>
         <a class="btn secondary" href="{{ url_for('calendar_view') }}">Calendario permanencias</a>
+        <a class="btn secondary" href="{{ url_for('dashboard') }}">Dashboard</a>
         <a class="btn secondary" href="{{ url_for('logout') }}">Salir</a>
-      </div>
     {% endif %}
 
     {% with messages = get_flashed_messages(with_categories=true) %}
