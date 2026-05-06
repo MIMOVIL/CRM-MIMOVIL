@@ -444,7 +444,7 @@ def api_permanencias():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return "Dashboard en construcción"
+    return render_template("dashboard.html")
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
 def import_clients():
