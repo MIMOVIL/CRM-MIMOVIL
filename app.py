@@ -466,7 +466,7 @@ def dashboard():
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
-        pending_tasks=pending_tasks
+        pending_tasks=pending_tasks,
         month_contracts=month_contracts
     )
 @app.route("/clients/import", methods=["GET", "POST"])
