@@ -455,7 +455,7 @@ def dashboard():
         WHERE pending_tasks IS NOT NULL
         AND TRIM(pending_tasks) != ''
 """).fetchone()["total"]
-return render_template(
+    return render_template(
         "dashboard.html",
         total_clients=total_clients,
         pending_tasks=pending_tasks
