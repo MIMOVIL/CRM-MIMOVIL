@@ -197,6 +197,29 @@
     </select>
   </div>
 </div>
+        <div>
+    <label>Tipo de servicio</label>
+
+    <select name="service_type">
+        {% set srv = client.service_type if client else '' %}
+
+        <option value="">— Seleccionar —</option>
+
+        <option value="FIBRA + FIJO" {% if srv=="FIBRA + FIJO" %}selected{% endif %}>FIBRA + FIJO</option>
+
+        <option value="PACK CONVERGENTE" {% if srv=="PACK CONVERGENTE" %}selected{% endif %}>PACK CONVERGENTE</option>
+
+        <option value="SOLO MOVIL" {% if srv=="SOLO MOVIL" %}selected{% endif %}>SOLO MOVIL</option>
+
+        <option value="ENERGIA" {% if srv=="ENERGIA" %}selected{% endif %}>ENERGIA</option>
+
+        <option value="SEGUROS" {% if srv=="SEGUROS" %}selected{% endif %}>SEGUROS</option>
+
+        <option value="CENTRALITA" {% if srv=="CENTRALITA" %}selected{% endif %}>CENTRALITA</option>
+
+        <option value="OTROS" {% if srv=="OTROS" %}selected{% endif %}>OTROS</option>
+    </select>
+</div>
 
 <div style="height:12px;"></div>
 
