@@ -469,29 +469,29 @@ rows = db.execute("""
     FROM clients
 """).fetchall()
 
-for r in rows:
-    end_date = r["permanence_end_date"] or r["permanence_end"]
-
-    if end_date:
-        try:
-            d, m, y = end_date.split("/")
-            end = date(int(y), int(m), int(d))
-
-            days_left = (end - date.today()).days
-
-            if 0 <= days_left <= 30:
-                upcoming_permanences += 1
-
-        except:
-            pass
+    for r in rows:
+        end_date = r["permanence_end_date"] or r["permanence_end"]
     
-    return render_template(
-        "dashboard.html",
-        total_clients=total_clients,
-        pending_tasks=pending_tasks,
-        month_contracts=month_contracts,
-        upcoming_permanences=upcoming_permanences
-    )
+        if end_date:
+            try:
+                d, m, y = end_date.split("/")
+                end = date(int(y), int(m), int(d))
+    
+                days_left = (end - date.today()).days
+    
+                if 0 <= days_left <= 30:
+                    upcoming_permanences += 1
+    
+            except:
+                pass
+        
+        return render_template(
+            "dashboard.html",
+            total_clients=total_clients,
+            pending_tasks=pending_tasks,
+            month_contracts=month_contracts,
+            upcoming_permanences=upcoming_permanences
+        )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
 def import_clients():
