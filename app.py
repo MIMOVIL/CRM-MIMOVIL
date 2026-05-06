@@ -117,6 +117,7 @@ def init_db():
     # Comercial + Estado
     _add_col_if_missing(db, "clients", "commercial", "TEXT")
     _add_col_if_missing(db, "clients", "status", "TEXT")
+    _add_col_if_missing(db, "clients", "service_type", "TEXT")
 
     # ---- Mobile lines ----
     db.execute("""
