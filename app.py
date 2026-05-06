@@ -532,9 +532,10 @@ def import_clients():
                         permanence_end,
                         permanence_end_date,
                         pending_tasks,
+                        service_type,
                         created_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     full_name,
                     dni,
@@ -544,6 +545,7 @@ def import_clients():
                     permanence_end,
                     permanence_end,
                     pending_tasks,
+                    request.form.get("service_type"),
                     datetime.utcnow().isoformat()
                 ))
 
