@@ -444,7 +444,16 @@ def api_permanencias():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    db = get_db()
+
+    total_clients = db.execute(
+        "SELECT COUNT(*) as total FROM clients"
+    ).fetchone()["total"]
+
+    return render_template(
+        "dashboard.html",
+        total_clients=total_clients
+    )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
 def import_clients():
