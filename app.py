@@ -442,6 +442,12 @@ def api_permanencias():
     out.sort(key=lambda x: x["permanence_end_date"] or "9999-12-31")
     return jsonify(out)
 
+@app.route("/clients/import", methods=["GET", "POST"])
+@login_required
+def import_clients():
+    return render_template("import_excel.html")
+
+
 @app.route("/clients/export/excel")
 @login_required
 def export_clients_excel():
@@ -453,7 +459,6 @@ def export_clients_excel():
     ws = wb.active
     ws.title = "Clientes"
 
-    # Cabeceras
     ws.append([
         "ID", "Nombre", "DNI", "Telefono",
         "Operador", "Fin permanencia", "Estado", "Pendiente"
