@@ -449,10 +449,16 @@ def dashboard():
     total_clients = db.execute(
         "SELECT COUNT(*) as total FROM clients"
     ).fetchone()["total"]
-
+pending_tasks = db.execute("""
+    SELECT COUNT(*) as total
+    FROM clients
+    WHERE pending_tasks IS NOT NULL
+    AND TRIM(pending_tasks) != ''
+""").fetchone()["total"]
     return render_template(
         "dashboard.html",
-        total_clients=total_clients
+        total_clients=total_clients,
+        pending_tasks=pending_tasks
     )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
