@@ -40,6 +40,28 @@
             {{ s["total"] }} clientes
         </div>
     {% endfor %}
+    <div class="card" style="margin-top:20px;">
+    <h3>Próximas permanencias</h3>
+
+    {% for alert in permanence_alerts %}
+
+        <div style="margin-top:10px; padding:10px; border-radius:8px;
+        {% if alert.days_left <= 7 %}
+            background:#ffdddd;
+        {% elif alert.days_left <= 15 %}
+            background:#fff3cd;
+        {% else %}
+            background:#ddffdd;
+        {% endif %}
+        ">
+
+            <strong>{{ alert.days_left }} días</strong><br>
+            Fin permanencia: {{ alert.end_date }}
+
+        </div>
+
+    {% endfor %}
+</div>
 </div>
 
 {% endblock %}
