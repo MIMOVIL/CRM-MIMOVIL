@@ -32,6 +32,15 @@
     <option value="{{ op }}" {% if operator_filter == op %}selected{% endif %}>{{ op }}</option>
   {% endfor %}
 </select>
+      <select name="service_type">
+    <option value="">Todos los servicios</option>
+
+    {% for srv in ["FIBRA + FIJO","PACK CONVERGENTE","SOLO MOVIL","ENERGIA","SEGUROS","CENTRALITA","OTROS"] %}
+
+        <option value="{{ srv }}" {% if service_filter == srv %}selected{% endif %}>{{ srv }}</option>
+
+    {% endfor %}
+</select>
 
 <input type="date" name="start_from">
 <input type="date" name="start_to">
