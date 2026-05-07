@@ -490,7 +490,7 @@ def dashboard():
                     upcoming_permanences += 1
             except:
                 pass
-         service_counts = []   
+    service_counts = []   
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
