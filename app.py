@@ -509,6 +509,7 @@ def dashboard():
         pending_tasks=pending_tasks,
         month_contracts=month_contracts,
         upcoming_permanences=upcoming_permanences,
+        permanence_alerts=permanence_alerts,
         service_counts=service_counts
     )
 @app.route("/clients/import", methods=["GET", "POST"])
