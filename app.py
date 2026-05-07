@@ -754,6 +754,7 @@ def update_client(client_id):
             observations = ?,
             pending_tasks = ?,
             commercial = ?,
+            service_type = ?,
             status = ?
         WHERE id = ?
     """, (
@@ -781,8 +782,8 @@ def update_client(client_id):
         request.form.get("observations"),
         request.form.get("pending_tasks"),
         request.form.get("commercial"),
-        request.form.get("status"),
         request.form.get("service_type"),
+        request.form.get("status"),
         client_id
     ))
 
