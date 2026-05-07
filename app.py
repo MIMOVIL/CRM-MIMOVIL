@@ -483,8 +483,12 @@ def dashboard():
 
         if end_date:
             try:
-                d, m, y = end_date.split("/")
-                end = date(int(y), int(m), int(d))
+                if "/" in end_date:
+                    d, m, y = end_date.split("/")
+                    end = date(int(y), int(m), int(d))
+                else:
+                    y, m, d = end_date.split("-")
+                    end = date(int(y), int(m), int(d))
                 days_left = (end - date.today()).days
 
                 if 0 <= days_left <= 30:
