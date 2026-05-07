@@ -471,6 +471,7 @@ def dashboard():
     """).fetchone()["total"]
 
     upcoming_permanences = 0
+    permanence_alerts = []
 
     rows = db.execute("""
         SELECT permanence_end_date, permanence_end
@@ -488,6 +489,10 @@ def dashboard():
 
                 if 0 <= days_left <= 30:
                     upcoming_permanences += 1
+                    permanence_alerts.append({
+                        "days_left": days_left,
+                        "end_date": end_date
+                    })
             except:
                 pass
     service_counts = db.execute("""
