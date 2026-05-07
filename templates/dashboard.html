@@ -45,20 +45,23 @@
 
     {% for alert in permanence_alerts %}
 
-        <div style="margin-top:10px; padding:10px; border-radius:8px;
-        {% if alert.days_left <= 7 %}
-            background:#ffdddd;
-        {% elif alert.days_left <= 15 %}
-            background:#fff3cd;
-        {% else %}
-            background:#ddffdd;
-        {% endif %}
-        ">
+       <a href="/client/{{ alert.client_id }}" style="text-decoration:none; color:black;">
+    <div style="margin-top:10px; padding:10px; border-radius:8px;
+    {% if alert.days_left <= 7 %}
+        background:#ffdddd;
+    {% elif alert.days_left <= 15 %}
+        background:#fff3cd;
+    {% else %}
+        background:#ddffdd;
+    {% endif %}
+    ">
 
-            <strong>{{ alert.days_left }} días</strong><br>
-            Fin permanencia: {{ alert.end_date }}
+        <strong>{{ alert.full_name }}</strong><br>
+        Quedan {{ alert.days_left }} días<br>
+        Fin permanencia: {{ alert.end_date }}
 
-        </div>
+    </div>
+</a>
 
     {% endfor %}
 </div>
