@@ -334,6 +334,7 @@ def clients():
     only_pending = request.args.get("pending", "0").strip() == "1"
     status_filter = request.args.get("status", "").strip()
     operator_filter = request.args.get("operator", "").strip()
+    service_filter = request.args.get("service_type", "").strip()
     start_from = request.args.get("start_from", "").strip()
     start_to = request.args.get("start_to", "").strip()
 
@@ -353,6 +354,9 @@ def clients():
     if operator_filter:
         where.append("current_operator = ?")
         params.append(operator_filter)
+    if service_filter:
+        where.append("service_type = ?")
+        params.append(service_filter)
 
     if start_from:
        where.append("permanence_start_date >= ?")
