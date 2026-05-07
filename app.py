@@ -474,8 +474,8 @@ def dashboard():
     permanence_alerts = []
 
     rows = db.execute("""
-        SELECT permanence_end_date, permanence_end
-        FROM clients
+       SELECT id, full_name, permanence_end_date, permanence_end
+       FROM clients
     """).fetchall()
 
     for r in rows:
@@ -491,7 +491,9 @@ def dashboard():
                     upcoming_permanences += 1
                     permanence_alerts.append({
                         "days_left": days_left,
-                        "end_date": end_date
+                        "end_date": end_date,
+                        "client_id": r["id"],
+                        "full_name": r["full_name"],
                     })
             except:
                 pass
