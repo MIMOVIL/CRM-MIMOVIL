@@ -490,13 +490,14 @@ def dashboard():
                     upcoming_permanences += 1
             except:
                 pass
-      
+         service_counts = []   
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
         pending_tasks=pending_tasks,
         month_contracts=month_contracts,
         upcoming_permanences=upcoming_permanences,
+        service_counts=service_counts
     )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
