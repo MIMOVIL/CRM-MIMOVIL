@@ -31,5 +31,15 @@
 
     </div>
 </div>
+<div class="card">
+    <h3>Servicios contratados</h3>
+
+    {% for s in service_counts %}
+        <div style="margin-top:8px;">
+            <strong>{{ s["service_type"] }}</strong>:
+            {{ s["total"] }} clientes
+        </div>
+    {% endfor %}
+</div>
 
 {% endblock %}
