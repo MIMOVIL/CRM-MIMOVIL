@@ -490,7 +490,14 @@ def dashboard():
                     upcoming_permanences += 1
             except:
                 pass
-    service_counts = []   
+    service_counts = db.execute("""
+        SELECT service_type, COUNT(*) as total
+        FROM clients
+        WHERE service_type IS NOT NULL
+        AND TRIM(service_type) != ''
+        GROUP BY service_type
+        ORDER BY total DESC
+     """).fetchall()
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
