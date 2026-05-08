@@ -140,6 +140,7 @@ new Chart(ctx, {
     <h3>📈 Contratos por mes</h3>
 
     <canvas id="monthlyContractsChart" height="100"></canvas>
+    <canvas id="monthlyOperatorChart" height="100" style="margin-top:30px;"></canvas>
 </div>
 
 <script>
@@ -173,6 +174,43 @@ new Chart(monthlyCtx, {
                 display: true
             }
         }
+    }
+});
+            const operatorCtx = document.getElementById('monthlyOperatorChart');
+
+new Chart(operatorCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for m in monthly_contracts_chart %}
+                "{{ m['month'] }}",
+            {% endfor %}
+        ],
+        datasets: [
+            {
+                label: 'YOIGO',
+                data: [
+                    {% for m in monthly_contracts_chart %}
+                        0,
+                    {% endfor %}
+                ],
+                borderColor: '#e6007e',
+                tension: 0.3
+            },
+            {
+                label: 'AVATEL',
+                data: [
+                    {% for m in monthly_contracts_chart %}
+                        0,
+                    {% endfor %}
+                ],
+                borderColor: '#28a745',
+                tension: 0.3
+            }
+        ]
+    },
+    options: {
+        responsive: true
     }
 });
 </script>
