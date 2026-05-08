@@ -672,15 +672,15 @@ def new_client():
                 permanence_start, permanence_end,
                 permanence_start_date, permanence_months, permanence_end_date,
                 terminal, sales_done, repairs_done, procedures_done, observations,
-                pending_tasks, commercial, status, created_at
+                pending_tasks, commercial, status, service_type, created_at
             ) VALUES (
-                ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?,
                 ?, ?,
                 ?,
                 ?, ?,
                 ?, ?, ?,
                 ?, ?, ?, ?, ?,
-                ?, ?, ?, ?
+          ?, ?, ?, ?, ?
             )
         """, (
             request.form["full_name"],
