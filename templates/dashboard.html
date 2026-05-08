@@ -45,7 +45,7 @@
 
     {% for alert in permanence_alerts %}
 
-       <a href="/client/{{ alert.client_id }}" style="text-decoration:none; color:black;">
+       <a href="/clients/{{ alert.client_id }}" style="text-decoration:none; color:black;">
     <div style="margin-top:10px; padding:10px; border-radius:8px;
     {% if alert.days_left <= 7 %}
         background:#ffdddd;
