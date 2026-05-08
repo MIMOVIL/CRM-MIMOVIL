@@ -9,21 +9,25 @@
 
     <div class="row" style="margin-top:20px;">
 
-        <div class="card">
-            <h3>Total clientes</h3>
-            <p>{{ total_clients }}</p>
-        </div>
+        <div class="card" style="border-left:6px solid #e6007e;">
+             <h3>👥 Total clientes</h3>
+             <p style="font-size:32px; font-weight:bold;">{{ total_clients }}</p>
+</div>
 
-        <div class="card">
-            <h3>Contratos este mes</h3>
-            <p>{{ month_contracts }}</p>
-        </div>
+       <div class="card" style="border-left:6px solid #28a745;">
+             <h3>📄 Contratos este mes</h3>
+             <p style="font-size:32px; font-weight:bold;">
+               {{ month_contracts }}
+             </p>
+</div>
 
 
-        <div class="card">
-            <h3>Tareas pendientes</h3>
-            <p>{{ pending_tasks }}</p>
-        </div>
+        <div class="card" style="border-left:6px solid #dc3545;">
+             <h3>⏰ Tareas pendientes</h3>
+             <p style="font-size:32px; font-weight:bold;">
+               {{ pending_tasks }}
+    </p>
+</div>
 
     </div>
 </div>
