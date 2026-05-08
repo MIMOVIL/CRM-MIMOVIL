@@ -136,5 +136,45 @@ new Chart(ctx, {
     }
 });
 </script>
+<div class="card" style="margin-top:20px;">
+    <h3>📈 Contratos por mes</h3>
+
+    <canvas id="monthlyContractsChart" height="100"></canvas>
+</div>
+
+<script>
+const monthlyCtx = document.getElementById('monthlyContractsChart');
+
+new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for m in monthly_contracts_chart %}
+                "{{ m['month'] }}",
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Contratos',
+            data: [
+                {% for m in monthly_contracts_chart %}
+                    {{ m['total'] }},
+                {% endfor %}
+            ],
+            borderColor: '#e6007e',
+            backgroundColor: 'rgba(230,0,126,0.1)',
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: true
+            }
+        }
+    }
+});
+</script>
 
 {% endblock %}
