@@ -510,7 +510,7 @@ def dashboard():
         ORDER BY total DESC
      """).fetchall()
     recent_clients = db.execute("""
-        SELECT id, full_name, current_operator, service_type, created_at
+        SELECT id, full_name, current_operator, service_type
         FROM clients
         ORDER BY id DESC
         LIMIT 5
