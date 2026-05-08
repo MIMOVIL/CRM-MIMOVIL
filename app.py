@@ -515,6 +515,14 @@ def dashboard():
         ORDER BY id DESC
         LIMIT 5
      """).fetchall()
+    monthly_contracts_chart = db.execute("""
+        SELECT strftime('%Y-%m', permanence_start_date) as month, COUNT(*) as total
+        FROM clients
+        WHERE permanence_start_date IS NOT NULL
+        AND TRIM(permanence_start_date) != ''
+        GROUP BY month
+        ORDER BY month ASC
+    """).fetchall()
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
@@ -524,6 +532,7 @@ def dashboard():
         permanence_alerts=permanence_alerts,
         service_counts=service_counts,
         recent_clients=recent_clients,
+        monthly_contracts_chart=monthly_contracts_chart,
     )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
