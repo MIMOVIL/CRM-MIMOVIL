@@ -509,6 +509,12 @@ def dashboard():
         GROUP BY service_type
         ORDER BY total DESC
      """).fetchall()
+    recent_clients = db.execute("""
+        SELECT id, full_name, current_operator, service_type, created_at
+        FROM clients
+        ORDER BY id DESC
+        LIMIT 5
+     """).fetchall()
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
@@ -516,7 +522,8 @@ def dashboard():
         month_contracts=month_contracts,
         upcoming_permanences=len(permanence_alerts),
         permanence_alerts=permanence_alerts,
-        service_counts=service_counts
+        service_counts=service_counts,
+        recent_clients=recent_clients,
     )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
