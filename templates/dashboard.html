@@ -62,5 +62,34 @@
     {% endfor %}
 </div>
 </div>
+{% endfor %}
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <h3>Últimos clientes añadidos</h3>
+
+    {% for c in recent_clients %}
+        <a href="/client/{{ c.id }}" style="text-decoration:none; color:black;">
+            <div style="
+                margin-top:10px;
+                padding:10px;
+                border-radius:8px;
+                background:#f5f5f5;
+            ">
+                <strong>{{ c.full_name }}</strong><br>
+
+                {% if c.current_operator %}
+                    Operador: {{ c.current_operator }}<br>
+                {% endif %}
+
+                {% if c.service_type %}
+                    Servicio: {{ c.service_type }}
+                {% endif %}
+            </div>
+        </a>
+    {% endfor %}
+</div>
+
+{% endblock %}
 
 {% endblock %}
