@@ -514,7 +514,7 @@ def dashboard():
         total_clients=total_clients,
         pending_tasks=pending_tasks,
         month_contracts=month_contracts,
-        upcoming_permanences=upcoming_permanences,
+        upcoming_permanences=len(permanence_alerts),
         permanence_alerts=permanence_alerts,
         service_counts=service_counts
     )
