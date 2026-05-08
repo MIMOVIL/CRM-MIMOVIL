@@ -523,6 +523,18 @@ def dashboard():
         GROUP BY month
         ORDER BY month ASC
     """).fetchall()
+    monthly_operator_chart = db.execute("""
+        SELECT strftime('%Y-%m', permanence_start_date) as month,
+               current_operator,
+               COUNT(*) as total
+       FROM clients
+       WHERE permanence_start_date IS NOT NULL
+       AND TRIM(permanence_start_date) != ''
+       AND current_operator IS NOT NULL
+       AND TRIM(current_operator) != ''
+       GROUP BY month, current_operator
+       ORDER BY month ASC
+   """).fetchall()
     return render_template(
         "dashboard.html",
         total_clients=total_clients,
@@ -533,6 +545,7 @@ def dashboard():
         service_counts=service_counts,
         recent_clients=recent_clients,
         monthly_contracts_chart=monthly_contracts_chart,
+        monthly_operator_chart=monthly_operator_chart,
     )
 @app.route("/clients/import", methods=["GET", "POST"])
 @login_required
