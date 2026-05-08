@@ -33,6 +33,7 @@
 </div>
 <div class="card">
     <h3>Servicios contratados</h3>
+    <canvas id="servicesChart" height="200"></canvas>
 
     {% for s in service_counts %}
         <div style="margin-top:8px;">
@@ -99,5 +100,41 @@
     {% endfor %}
 
 </div>
+<script>
+const ctx = document.getElementById('servicesChart');
+
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for s in service_counts %}
+                "{{ s['service_type'] }}",
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for s in service_counts %}
+                    {{ s['total'] }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#e6007e',
+                '#28a745',
+                '#007bff',
+                '#ffc107',
+                '#dc3545'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
 
 {% endblock %}
