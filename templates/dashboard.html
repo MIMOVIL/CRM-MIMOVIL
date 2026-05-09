@@ -139,7 +139,6 @@ new Chart(ctx, {
 <div class="card" style="margin-top:20px;">
     <h3>📈 Contratos por mes</h3>
 
-    <canvas id="monthlyContractsChart" height="100"></canvas>
     <canvas id="monthlyOperatorChart" height="100" style="margin-top:30px;"></canvas>
 </div>
 
@@ -168,73 +167,9 @@ new Chart(monthlyCtx, {
         }]
     },
     options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                display: true
-            }
-        }
+        responsive: true
     }
 });
-            const operatorCtx = document.getElementById('monthlyOperatorChart');
-
-const operatorData = {};
-
-{% for row in monthly_operator_chart %}
-    if (!operatorData["{{ row['current_operator'] }}"]) {
-        operatorData["{{ row['current_operator'] }}"] = {};
-    }
-
-    operatorData["{{ row['current_operator'] }}"]["{{ row['month'] }}"] = {{ row['total'] }};
-{% endfor %}
-
-const months = [
-    {% for m in monthly_contracts_chart %}
-        "{{ m['month'] }}",
-    {% endfor %}
-];
-
-const colors = [
-    '#e6007e',
-    '#28a745',
-    '#007bff',
-    '#ffc107',
-    '#dc3545',
-    '#6f42c1',
-    '#20c997',
-    '#fd7e14'
-];
-
-const datasets = [];
-
-let colorIndex = 0;
-
-for (const operator in operatorData) {
-
-    datasets.push({
-        label: operator,
-        data: months.map(month => operatorData[operator][month] || 0),
-        borderColor: colors[colorIndex % colors.length],
-        tension: 0.3
-    });
-
-    colorIndex++;
-}
-
-new Chart(operatorCtx, {
-    type: 'line',
-    data: {
-        labels: months,
-        datasets: datasets
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                display: true
-            }
-        }
-    }
-});
+</script>
 
 {% endblock %}
