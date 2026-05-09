@@ -190,20 +190,32 @@ new Chart(operatorCtx, {
             {
                 label: 'YOIGO',
                 data: [
-                    {% for m in monthly_contracts_chart %}
-                        0,
-                    {% endfor %}
-                ],
+                    {% for month in monthly_contracts_chart %}
+                        {% set found = 0 %}
+                        {% for row in monthly_operator_chart %}
+                            {% if row['month'] == month['month'] and row['current_operator'] == 'YOIGO' %}
+                                {% set found = row['total'] %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ found }},
+                   {% endfor %}
+],
                 borderColor: '#e6007e',
                 tension: 0.3
             },
             {
                 label: 'AVATEL',
                 data: [
-                    {% for m in monthly_contracts_chart %}
-                        0,
-                    {% endfor %}
-                ],
+                    {% for month in monthly_contracts_chart %}
+                        {% set found = 0 %}
+                        {% for row in monthly_operator_chart %}
+                            {% if row['month'] == month['month'] and row['current_operator'] == 'AVATEL' %}
+                                {% set found = row['total'] %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ found }},
+                   {% endfor %}
+],
                 borderColor: '#28a745',
                 tension: 0.3
             }
